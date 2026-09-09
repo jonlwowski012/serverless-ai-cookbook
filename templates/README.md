@@ -4,7 +4,7 @@
 
 Templates are quick-start configurations to help you serve models and run jobs in a few clicks. Click a **Deploy** link (Create Endpoint / Create Job) to open the Nebius Console create form with fields pre-filled. You can manually adjust fields if needed.
 
-**License policy:** Apache-2.0, MIT, BSD, [NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/), [OpenMDW-1.1](https://openmdw.ai/license/1-1/).
+**License policy:** Apache-2.0, MIT, BSD, LGPL-2.1, [NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/), [OpenMDW-1.1](https://openmdw.ai/license/1-1/).
 
 ---
 
@@ -242,6 +242,30 @@ Templates are quick-start configurations to help you serve models and run jobs i
   <td width="220" valign="middle"><img src="https://cdn-avatars.huggingface.co/v1/production/uploads/65df9200dc3292a8983e5017/Vs5FPVCH-VZBipV3qKTuy.png" width="20" height="20" alt="Cosmos 3 Generator" align="absmiddle">&nbsp;<a href="endpoint-cosmos3-generator/README.md"><strong>Cosmos 3 Generator</strong></a></td>
   <td width="160" valign="middle" align="center"><a href="https://console.nebius.com/serverless/endpoint/create?image=vllm%2Fvllm-omni%3Acosmos3&amp;command=vllm%20serve%20nvidia%2FCosmos3-Nano%20--omni%20--model-class-name%20Cosmos3OmniDiffusersPipeline%20--no-guardrails%20--host%200.0.0.0%20--port%208000%20--init-timeout%201800&amp;targetPort=8000&amp;platform=gpu-h100-sxm&amp;preset=1gpu-16vcpu-200gb&amp;diskSize=500GiB&amp;preemptible=true&amp;auth=true"><img src="./assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a></td>
   <td width="580" valign="middle">Cosmos3-Nano Generator is NVIDIA's OpenMDW-1.1 world model for text/image/video-to-video generation with optional sound, served via vLLM-Omni on a single H100 (async video jobs API).</td>
+</tr>
+</tbody>
+</table>
+
+### 🧬 Molecular Dynamics
+
+<table width="960" border="1" cellpadding="8" cellspacing="0" style="table-layout:fixed;width:960px;min-width:960px;border-collapse:collapse;">
+<colgroup>
+  <col width="220">
+  <col width="160">
+  <col width="580">
+</colgroup>
+<thead>
+<tr>
+  <th width="220" align="left">Template</th>
+  <th width="160" align="center">Deploy</th>
+  <th width="580" align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td width="220" valign="middle">🧬&nbsp;<a href="endpoint-gromacs/README.md"><strong>GROMACS REST + MCP</strong></a></td>
+  <td width="160" valign="middle" align="center"><a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00jz93pkqx2m4vqj4%2Fhcls%2Fgromacs-md-api%3A20260908-6bd2a84-dynamic&amp;targetPort=8000&amp;platform=gpu-l40s-a&amp;preset=1gpu-8vcpu-32gb&amp;diskSize=100GiB&amp;preemptible=false&amp;auth=true&amp;env=NGC_API_KEY&amp;env=GROMACS_VERSION%3Dlatest&amp;env=GROMACS_CPU_BUILD%3Davx2_256&amp;volumeMountPath=%2Fmnt%2Fhcls&amp;volumeSize=32"><img src="./assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a></td>
+  <td width="580" valign="middle">Run bounded GPU molecular dynamics through REST or MCP, with a selectable official NVIDIA GROMACS runtime and persistent Object Storage or Shared Filesystem outputs.</td>
 </tr>
 </tbody>
 </table>
