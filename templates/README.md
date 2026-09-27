@@ -5,6 +5,7 @@
 Templates are quick-start configurations to help you serve models and run jobs in a few clicks. Click a **Deploy** link (Create Endpoint / Create Job) to open the Nebius Console create form with fields pre-filled. You can manually adjust fields if needed.
 
 **License policy:** Apache-2.0, MIT, BSD, LGPL-2.1, [NVIDIA Open Model License](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/), [OpenMDW-1.1](https://openmdw.ai/license/1-1/).
+Template code in this repository is Apache-2.0. Some templates deploy third-party software under a copyleft license such as GPL-2.0; the template description says so.
 
 ---
 
@@ -289,7 +290,7 @@ Templates are quick-start configurations to help you serve models and run jobs i
 <tr>
   <td width="220" valign="middle">🧪&nbsp;<a href="endpoint-autodock-gpu/README.md"><strong>AutoDock-GPU REST + MCP</strong></a></td>
   <td width="160" valign="middle" align="center"><a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00jz93pkqx2m4vqj4%2Fcb22%40sha256%3A5c81e5455f526e19ec0dd6a34cf3dad51816898ebef2d7797e181e7879760f71&amp;targetPort=8000&amp;platform=gpu-h100-sxm&amp;preset=1gpu-16vcpu-200gb&amp;diskSize=100GiB&amp;preemptible=false&amp;auth=true"><img src="./assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a></td>
-  <td width="580" valign="middle">Run source-built AutoDock-GPU v1.6 through REST or MCP on SM80/86/89/90 GPUs; Blackwell is explicitly unsupported by this image.</td>
+  <td width="580" valign="middle">Run source-built AutoDock-GPU v1.6 through REST or MCP on SM80/86/89/90 GPUs; Blackwell is explicitly unsupported by this image. AutoDock-GPU is GPL-2.0; the template code is Apache-2.0.</td>
 </tr>
 </tbody>
 </table>

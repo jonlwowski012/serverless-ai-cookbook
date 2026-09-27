@@ -22,7 +22,7 @@ difficulty: advanced
 
 Run CUDA-accelerated AutoDock-GPU redocking and bounded ligand screening through REST or MCP. This functional image builds AutoDock-GPU v1.6 from pinned upstream source for SM80, SM86, SM89, and SM90 GPUs and persists artifacts to Object Storage or Shared Filesystem.
 
-**License:** GPL-2.0-only with LGPL components · **Source:** [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU) at `e63e6f6280ebfad18caa3e8f48afdc269e79e063`
+**License:** [GPL-2.0-only](https://github.com/ccsb-scripps/AutoDock-GPU/blob/e63e6f6280ebfad18caa3e8f48afdc269e79e063/LICENSE) for AutoDock-GPU (with LGPL-2.1 components); Apache-2.0 for the wrapper and template code. The image ships the upstream license texts and corresponding source. · **Source:** [AutoDock-GPU](https://github.com/ccsb-scripps/AutoDock-GPU) at `e63e6f6280ebfad18caa3e8f48afdc269e79e063`
 
 <!-- /factory:intro -->
 
