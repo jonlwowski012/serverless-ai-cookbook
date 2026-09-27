@@ -197,14 +197,9 @@ docker run --rm --gpus all -p 8000:8000 \
 ## CLI alternative
 
 The tested image is `cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb21@sha256:c291e308591382e2114e7a43146b4e4af4e4c47326397f935059c5094d4932ba`.
-The qualification used Nebius CLI 0.12.206, which rejects endpoint image references
-longer than 64 characters when creating a VM label. For that CLI, use the short
-alias below and verify its digest with [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane)
-before creating the endpoint. Do not use an alias whose digest differs.
 
 ```bash
-export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb21:r0918'
-test "$(crane digest "$IMAGE")" = 'sha256:c291e308591382e2114e7a43146b4e4af4e4c47326397f935059c5094d4932ba' || exit 1
+export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb21@sha256:c291e308591382e2114e7a43146b4e4af4e4c47326397f935059c5094d4932ba'
 ```
 
 Choose one volume value before creating the endpoint:
