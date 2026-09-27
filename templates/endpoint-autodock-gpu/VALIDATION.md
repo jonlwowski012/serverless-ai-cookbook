@@ -21,6 +21,5 @@ not requalified. The button does not attach a volume.
 
 All three deployment links are checked by the URL regression test. Browser validation of the
 Console form was blocked by Cloudflare (HTTP 403), so form behavior is not claimed as tested.
-CLI 0.12.206 rejected endpoint image references longer than 64 characters in the `vmapp-image`
-label. Live tests used the published short `cb22:r0918` alias resolving to the exact digest above;
-see the CLI section in the README. Temporary qualification endpoints were deleted after testing.
+Live tests used the published `cb22:r0918` alias, which resolves to the exact digest above; current
+CLI versions accept the digest reference directly. Temporary qualification endpoints were deleted after testing.
