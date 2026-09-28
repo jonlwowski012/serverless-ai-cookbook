@@ -6,11 +6,14 @@ ARG CUDA_RUNTIME_IMAGE=nvidia/cuda:12.8.1-runtime-ubuntu22.04@sha256:4a801ef9232
 FROM ${CUDA_DEVEL_IMAGE} AS engine
 ARG AUTODOCK_GPU_REVISION=e63e6f6280ebfad18caa3e8f48afdc269e79e063
 ENV DEBIAN_FRONTEND=noninteractive
+# Packages are not version-pinned: Ubuntu drops superseded versions from the archive, so exact
+# pins break rebuilds after the next security update. Reproducibility comes from the pinned
+# base-image digests and the pinned AutoDock-GPU revision.
 RUN apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=20 update && \
     apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=20 install -y --no-install-recommends \
-      build-essential=12.9ubuntu3 \
-      ca-certificates=20260601~22.04.1 \
-      git=1:2.34.1-1ubuntu1.17 && \
+      build-essential \
+      ca-certificates \
+      git && \
     rm -rf /var/lib/apt/lists/*
 RUN git clone --filter=blob:none https://github.com/ccsb-scripps/AutoDock-GPU.git /src/autodock-gpu
 WORKDIR /src/autodock-gpu
@@ -40,27 +43,16 @@ LABEL org.opencontainers.image.title="Nebius Serverless AutoDock-GPU REST and MC
       org.opencontainers.image.source="https://github.com/nebius/serverless-ai-cookbook" \
       org.opencontainers.image.revision="${HCLS_IMAGE_REVISION}" \
       org.opencontainers.image.licenses="GPL-2.0-only AND LGPL-2.1-only"
+# `upgrade` pulls current security fixes for packages already in the base image (gnupg, openssl,
+# …) instead of pinning each fixed version by hand; see the note in the engine stage.
 RUN apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=20 update && \
+    apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=20 upgrade -y --no-install-recommends && \
     apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 -o Acquire::http::Timeout=20 install -y --no-install-recommends \
-      ca-certificates=20260601~22.04.1 \
-      dirmngr=2.2.27-3ubuntu2.5 \
-      gnupg=2.2.27-3ubuntu2.5 \
-      gnupg-l10n=2.2.27-3ubuntu2.5 \
-      gnupg-utils=2.2.27-3ubuntu2.5 \
-      gnupg2=2.2.27-3ubuntu2.5 \
-      gpg=2.2.27-3ubuntu2.5 \
-      gpg-agent=2.2.27-3ubuntu2.5 \
-      gpg-wks-client=2.2.27-3ubuntu2.5 \
-      gpg-wks-server=2.2.27-3ubuntu2.5 \
-      gpgconf=2.2.27-3ubuntu2.5 \
-      gpgsm=2.2.27-3ubuntu2.5 \
-      gpgv=2.2.27-3ubuntu2.5 \
-      libgomp1=12.3.0-1ubuntu1~22.04.3 \
-      libssl3=3.0.2-0ubuntu1.29 \
-      openssl=3.0.2-0ubuntu1.29 \
-      python3=3.10.6-1~22.04.1 \
-      python3-pip=22.0.2+dfsg-1ubuntu0.7 \
-      python3-venv=3.10.6-1~22.04.1 && \
+      ca-certificates \
+      libgomp1 \
+      python3 \
+      python3-pip \
+      python3-venv && \
     rm -rf /var/lib/apt/lists/* && \
     python3 -m venv /opt/hcls && \
     /opt/hcls/bin/pip install --no-cache-dir fastapi==0.136.1 mcp==2.2.0 pydantic==2.12.5 uvicorn==0.52.4 && \
