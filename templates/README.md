@@ -292,6 +292,11 @@ Template code in this repository is Apache-2.0. Some templates deploy third-part
   <td width="160" valign="middle" align="center"><a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00jz93pkqx2m4vqj4%2Fcb22%40sha256%3A5c81e5455f526e19ec0dd6a34cf3dad51816898ebef2d7797e181e7879760f71&amp;targetPort=8000&amp;platform=gpu-h100-sxm&amp;preset=1gpu-16vcpu-200gb&amp;diskSize=100GiB&amp;preemptible=false&amp;auth=true"><img src="./assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a></td>
   <td width="580" valign="middle">Run source-built AutoDock-GPU v1.6 through REST or MCP on SM80/86/89/90 GPUs; Blackwell is explicitly unsupported by this image. AutoDock-GPU is GPL-2.0; the template code is Apache-2.0.</td>
 </tr>
+<tr>
+  <td width="220" valign="middle">🧪&nbsp;<a href="endpoint-autodock-vina/README.md"><strong>AutoDock Vina REST + MCP</strong></a></td>
+  <td width="160" valign="middle" align="center"><a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00jz93pkqx2m4vqj4%2Fcb23%40sha256%3Af80ba1d50f7bbbd6192f9695a71691bdd37390d3bfc0e6152d9cb0a80ef2f171&amp;targetPort=8000&amp;platform=cpu-d3&amp;preset=4vcpu-16gb&amp;diskSize=100GiB&amp;preemptible=false&amp;auth=true"><img src="./assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a></td>
+  <td width="580" valign="middle">Run low-cost AutoDock Vina CPU redocking through REST or MCP with explicit boxes, bounded PDBQT inputs, and optional persistent storage.</td>
+</tr>
 </tbody>
 </table>
 
