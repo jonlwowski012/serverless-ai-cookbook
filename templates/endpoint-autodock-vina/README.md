@@ -20,7 +20,7 @@ difficulty: intermediate
 
 <!-- factory:intro -->
 
-Run low-cost AutoDock Vina redocking and small docking workloads through REST or MCP. The endpoint uses CPU intentionally, exposes a bounded asynchronous API, and persists results to Object Storage or Shared Filesystem.
+Run low-cost AutoDock Vina redocking and small docking workloads through REST or MCP. The endpoint uses CPU intentionally, exposes a bounded asynchronous API, and can persist results to Object Storage or Shared Filesystem when you attach one at `/mnt/hcls`.
 
 **License:** [Apache-2.0](https://github.com/ccsb-scripps/AutoDock-Vina/blob/develop/LICENSE) · **Engine:** [AutoDock Vina 1.2.7](https://github.com/ccsb-scripps/AutoDock-Vina)
 
@@ -197,18 +197,10 @@ docker build --platform linux/amd64 \
 
 ## CLI alternative
 
-The tested image is `cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb23@sha256:f80ba1d50f7bbbd6192f9695a71691bdd37390d3bfc0e6152d9cb0a80ef2f171`.
-The qualification used Nebius CLI 0.12.206, which rejects endpoint image references
-longer than 64 characters when creating a VM label. For that CLI, use the short
-alias below and verify its digest with [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane)
-before creating the endpoint. Do not use an alias whose digest differs.
+The tested image is pinned by digest so the CLI and the one-click link deploy the same build.
 
 ```bash
-export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb23:r0918'
-test "$(crane digest "$IMAGE")" = 'sha256:f80ba1d50f7bbbd6192f9695a71691bdd37390d3bfc0e6152d9cb0a80ef2f171' || exit 1
-```
-
-```bash
+export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb23@sha256:f80ba1d50f7bbbd6192f9695a71691bdd37390d3bfc0e6152d9cb0a80ef2f171'
 export NEBIUS_PROJECT_ID='project-...'
 export NEBIUS_SUBNET_ID='vpcsubnet-...'
 export VINA_VOLUME='computefilesystem-<id>:/mnt/hcls:rw'
