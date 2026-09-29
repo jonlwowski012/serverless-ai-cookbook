@@ -35,3 +35,12 @@ def test_worker_bounds_are_enforced() -> None:
         bounded_int({"steps": 101}, "steps", 1, 1, 100)
     with pytest.raises(ValueError, match="timestep_fs"):
         bounded_float({"timestep_fs": float("nan")}, "timestep_fs", 1, 0.1, 10)
+
+
+def test_probe_failure_surfaces_worker_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def probe(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, "", "OpenMM CUDA platform is unavailable")
+
+    monkeypatch.setattr(subprocess, "run", probe)
+    with pytest.raises(RuntimeError, match="startup probe failed: OpenMM CUDA platform is unavailable"):
+        OpenMMAdapter().load()

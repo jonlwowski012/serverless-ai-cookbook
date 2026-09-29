@@ -155,20 +155,11 @@ docker build --platform linux/amd64 \
 
 ## CLI alternative
 
-The tested image is `cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb24@sha256:4a30409ff30ca0906743938363f0f92903a7ba4c49dd4f8dfc1ab2e9634d3184`.
-The qualification used Nebius CLI 0.12.206, which rejects endpoint image references
-longer than 64 characters when creating a VM label. For that CLI, use the short
-alias below and verify its digest with [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane)
-before creating the endpoint. Do not use an alias whose digest differs.
-
-```bash
-export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb24:r0918'
-test "$(crane digest "$IMAGE")" = 'sha256:4a30409ff30ca0906743938363f0f92903a7ba4c49dd4f8dfc1ab2e9634d3184' || exit 1
-```
-
+The tested image is pinned by digest so the CLI and the one-click link deploy the same build.
 Choose either a Shared Filesystem or Object Storage volume and create the service:
 
 ```bash
+export IMAGE='cr.eu-north1.nebius.cloud/e00jz93pkqx2m4vqj4/cb24@sha256:4a30409ff30ca0906743938363f0f92903a7ba4c49dd4f8dfc1ab2e9634d3184'
 export NEBIUS_PROJECT_ID='project-...'
 export NEBIUS_SUBNET_ID='vpcsubnet-...'
 export OPENMM_VOLUME='computefilesystem-<id>:/mnt/hcls:rw'

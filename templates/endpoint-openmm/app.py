@@ -29,8 +29,12 @@ class OpenMMAdapter:
     def load(self) -> None:
         probe = subprocess.run(
             [sys.executable, self.worker, "probe"],
-            capture_output=True, text=True, timeout=180, check=True,
+            capture_output=True, text=True, timeout=180, check=False,
         )
+        if probe.returncode != 0:
+            # Surface the worker's own error (e.g. CUDA plugin load failures) in the startup log.
+            detail = (probe.stderr or probe.stdout or "no output")[-1200:]
+            raise RuntimeError(f"OpenMM CUDA startup probe failed: {detail}")
         report = json.loads(probe.stdout.strip().splitlines()[-1])
         if not report.get("cuda_step_passed"):
             raise RuntimeError("OpenMM startup probe did not complete a CUDA integration step")
