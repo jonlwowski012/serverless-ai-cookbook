@@ -52,11 +52,6 @@ def prepare(mode: str) -> Path:
             raise ValueError(f"dataset camera is not a video: {feature}")
 
     config = json.loads((HERE / "train.json").read_text())
-    gpu_count = int(os.environ.get("NEBIUS_GPU_COUNT", "8"))
-    if gpu_count not in (1, 8):
-        raise ValueError("NEBIUS_GPU_COUNT must be 1 or 8")
-    if gpu_count == 1:
-        config.update(shard_size=1, param_dtype="bfloat16")
     policy = config["policy"]
     if (policy["action_dim"] != len(names) or policy["fps"] != contract["fps"]
             or policy["camera_keys"] != [f"images.{key}" for key in contract["cameras"]]
@@ -88,7 +83,7 @@ def prepare(mode: str) -> Path:
     (result / "recipe.json").write_text(json.dumps(recipe, indent=2) + "\n")
     (result / "PREPARED.json").write_text(json.dumps({
         "run_name": run_name, "mode": mode, "image": os.environ.get("IMAGE_REF"),
-        "gpu_count": gpu_count,
+        "gpu_count": 1,
         "dataset": contract["repo_id"], "dataset_revision": contract["revision"],
         "base_revision": revision, "index": summary,
     }, indent=2) + "\n")

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Usage: bash job.sh smoke|full show|dry-run|submit
+# Usage: bash job.sh smoke|full [dry-run]
 set -euo pipefail
 
 run_mode=${1:-}
-operation=${2:-}
-case "$run_mode" in smoke|full) ;; *) echo "mode must be smoke or full" >&2; exit 2 ;; esac
-case "$operation" in show|dry-run|submit) ;; *) echo "operation must be show, dry-run, or submit" >&2; exit 2 ;; esac
+case "$run_mode" in smoke|full) ;; *) echo "usage: bash job.sh smoke|full [dry-run]" >&2; exit 2 ;; esac
+case ${2:-} in ''|dry-run) ;; *) echo "only dry-run is supported as a second argument" >&2; exit 2 ;; esac
 
 : "${NEBIUS_PROFILE:?set NEBIUS_PROFILE}"
 : "${NEBIUS_PROJECT_ID:?set NEBIUS_PROJECT_ID}"
@@ -57,8 +56,8 @@ elif [[ -n ${WANDB_PROJECT:-} || -n ${WANDB_ENTITY:-} ]]; then
   exit 2
 fi
 
-case "$operation" in
-  show) printf '%q ' "${command[@]}"; printf '\n' ;;
-  dry-run) "${command[@]}" --dry-run ;;
-  submit) "${command[@]}" --async ;;
-esac
+if [[ ${2:-} == dry-run ]]; then
+  "${command[@]}" --dry-run
+else
+  "${command[@]}" --async
+fi

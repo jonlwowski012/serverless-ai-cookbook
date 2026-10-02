@@ -1,4 +1,4 @@
-"""Prepare the example, run eight-rank full training, and publish complete artifacts."""
+"""Prepare the example, train on one GPU, and publish checkpoints and export."""
 
 import hashlib
 import json
@@ -54,11 +54,8 @@ def worker() -> None:
     result = Path("/workspace/data/runs") / run_name
     if not (result / "PREPARED.json").is_file():
         raise FileNotFoundError("dataset preparation has not completed")
-    gpu_count = int(os.environ.get("NEBIUS_GPU_COUNT", "8"))
-    if gpu_count not in (1, 8) or int(os.environ.get("WORLD_SIZE", "0")) != gpu_count:
-        raise RuntimeError("GPU rank count does not match NEBIUS_GPU_COUNT")
-    if torch.cuda.device_count() != gpu_count:
-        raise RuntimeError(f"expected {gpu_count} visible GPUs, got {torch.cuda.device_count()}")
+    if torch.cuda.device_count() != 1:
+        raise RuntimeError("this example needs one visible GPU")
     rank, _, _ = init_distributed()
     try:
         config = TrainConfig.from_file(WORK / "train.json")
@@ -95,9 +92,8 @@ def main() -> None:
         worker()
         return
     prepare(mode)
-    gpu_count = int(os.environ.get("NEBIUS_GPU_COUNT", "8"))
     subprocess.run([
-        "torchrun", "--standalone", "--nnodes=1", f"--nproc-per-node={gpu_count}",
+        "torchrun", "--standalone", "--nnodes=1", "--nproc-per-node=1",
         "/app/cookbook/train_job.py", "worker",
     ], check=True)
 

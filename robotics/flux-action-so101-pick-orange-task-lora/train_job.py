@@ -155,7 +155,6 @@ def main() -> None:
     record = {
         "run_name": run_name,
         "mode": mode,
-        "status": "running",
         "started_utc": now(),
         "image": os.environ.get("IMAGE_REF"),
         "recipe": RECIPE,
@@ -168,36 +167,29 @@ def main() -> None:
             "entity": os.environ.get("WANDB_ENTITY") if wandb_enabled else None,
         },
     }
-    (result / "status.json").write_text(json.dumps(record, indent=2) + "\n")
     work = Path("/workspace/work")
     work.mkdir(parents=True, exist_ok=False)
-    try:
-        report = prepare(work / "dataset", RECIPE["dataset"], result, RECIPE["instruction"])
-        policy, encoders = download_models(work)
-        overlap = check_model_overlap(work / "dataset", policy, result / "calibration-report.json")
-        if overlap["frames"] != RECIPE["dataset"]["frames"]:
-            raise ValueError("calibrated dataset frame count mismatch")
-        started = time.monotonic()
-        published = train(work, result, policy, encoders, steps)
-        selected_checkpoint = f"checkpoints/{published[-1]['directory']}/pretrained_model"
-        if not (result / selected_checkpoint).is_dir():
-            raise FileNotFoundError(f"published checkpoint missing: {selected_checkpoint}")
-        record.update({
-            "status": "trained",
-            "finished_utc": now(),
-            "train_seconds": round(time.monotonic() - started, 2),
-            "dataset_report": report,
-            "calibration_report": overlap,
-            "checkpoints": published,
-            "selected_checkpoint": selected_checkpoint,
-            "quality_evaluation": "pending",
-        })
-        (result / "status.json").write_text(json.dumps(record, indent=2) + "\n")
-        (result / "TRAIN_COMPLETE.json").write_text(json.dumps(record, indent=2) + "\n")
-    except Exception as error:
-        record.update({"status": "failed", "finished_utc": now(), "error": str(error)})
-        (result / "status.json").write_text(json.dumps(record, indent=2) + "\n")
-        raise
+    report = prepare(work / "dataset", RECIPE["dataset"], result, RECIPE["instruction"])
+    policy, encoders = download_models(work)
+    overlap = check_model_overlap(work / "dataset", policy, result / "calibration-report.json")
+    if overlap["frames"] != RECIPE["dataset"]["frames"]:
+        raise ValueError("calibrated dataset frame count mismatch")
+    started = time.monotonic()
+    published = train(work, result, policy, encoders, steps)
+    selected_checkpoint = f"checkpoints/{published[-1]['directory']}/pretrained_model"
+    if not (result / selected_checkpoint).is_dir():
+        raise FileNotFoundError(f"published checkpoint missing: {selected_checkpoint}")
+    record.update({
+        "status": "trained",
+        "finished_utc": now(),
+        "train_seconds": round(time.monotonic() - started, 2),
+        "dataset_report": report,
+        "calibration_report": overlap,
+        "checkpoints": published,
+        "selected_checkpoint": selected_checkpoint,
+        "quality_evaluation": "pending",
+    })
+    (result / "TRAIN_COMPLETE.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
 if __name__ == "__main__":
