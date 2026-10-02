@@ -89,6 +89,8 @@ Each case publishes `result.json`, then an empty `COMPLETE` object. `COMPLETE` m
 
 In a Nebius L40S run on 2026-10-02 using the same `run.py` with the official base image, all four jobs reached `COMPLETED` and each S3 prefix contained both objects. The two `pick_x=0.15` cases placed the cube within 6 mm of the target; the two `pick_x=0.1` cases missed the grasp and reported `success: false`. The sweep therefore records robot-task outcomes separately from job and upload completion.
 
+A second run built and pushed this Dockerfile, then submitted two jobs through `launch.py`. Both reached `COMPLETED`, published `result.json` and `COMPLETE`, and reported successful placements with 5.2 mm and 5.9 mm XY error.
+
 ## Optional local GPU check
 
 On a Linux Docker host with a compatible RTX GPU, run one case without S3:
