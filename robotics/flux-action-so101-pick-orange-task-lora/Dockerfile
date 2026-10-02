@@ -11,9 +11,6 @@ RUN git clone https://github.com/huggingface/lerobot.git /opt/lerobot \
     && cd /opt/lerobot \
     && git checkout --detach 1bc0bdfb20ad4f4f76dc8a68a0e0746d54f50de9 \
     && test "$(git rev-parse HEAD)" = 1bc0bdfb20ad4f4f76dc8a68a0e0746d54f50de9 \
-    && /opt/tools/bin/uv sync --locked --no-install-package torch --no-install-package torchvision \
-      --no-install-package nvidia-cudnn-cu12 --no-install-package nvidia-cublas-cu12 \
-    && /opt/tools/bin/uv sync --locked \
     && /opt/tools/bin/uv sync --locked --extra training --extra flux3 --extra peft --extra diffusion \
     && /opt/tools/bin/uv pip install --python /opt/lerobot/.venv/bin/python \
       'natten==0.21.6+torch2110cu128' --find-links https://whl.natten.org/
