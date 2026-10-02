@@ -25,9 +25,8 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual(len({command[command.index("--name") + 1] for command in commands}), 4)
         self.assertTrue(all(command.count("--env-secret") == 2 for command in commands))
         self.assertTrue(all("--args" in command for command in commands))
-        self.assertTrue(all("--inject-file" in command for command in commands))
-        snapshot = job_command(options, "run-1", "case-000", points[0], Path("/tmp/run.py"))
-        self.assertEqual(snapshot[snapshot.index("--inject-file") + 1], "/tmp/run.py:/opt/isaac-sweep/run.py")
+        self.assertTrue(all("--inject-file" not in command for command in commands))
+        self.assertTrue(all(command[command.index("--image") + 1] == options.image for command in commands))
 
     def test_task_success_needs_controller_and_final_pose(self):
         target = [0.7, -0.3, 0.02575]

@@ -27,7 +27,7 @@ def expand_sweep(config):
     return [dict(zip(axes, values)) for values in itertools.product(*(config[axis] for axis in axes))]
 
 
-def job_command(options, run_id, case_id, point, script_path=None):
+def job_command(options, run_id, case_id, point):
     container_args = shlex.join(
         [
             "/opt/isaac-sweep/run.py",
@@ -42,7 +42,6 @@ def job_command(options, run_id, case_id, point, script_path=None):
         "--name", f"isaac-pick-{run_id}-{case_id}",
         "--image", options.image,
         "--container-command", "/isaac-sim/python.sh",
-        "--inject-file", f"{script_path or Path(__file__).with_name('run.py')}:/opt/isaac-sweep/run.py",
         "--platform", options.platform,
         "--preset", options.preset,
         "--disk-size", "250Gi",
@@ -74,7 +73,7 @@ def job_id_from_output(output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path(__file__).with_name("sweep.json"))
-    parser.add_argument("--image", default="nvcr.io/nvidia/isaac-sim:5.1.0")
+    parser.add_argument("--image", required=True, help="pushed image built from this recipe's Dockerfile")
     parser.add_argument("--bucket", required=True)
     parser.add_argument("--endpoint", required=True, help="S3 endpoint URL")
     parser.add_argument("--region", required=True)
@@ -98,16 +97,12 @@ def main():
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     manifest = Path(__file__).with_name("runs") / run_id / "jobs.jsonl"
-    script_path = Path(__file__).with_name("run.py")
     if not options.dry_run:
         manifest.parent.mkdir(parents=True)
-        snapshot = manifest.parent / "run.py"
-        snapshot.write_bytes(script_path.read_bytes())
-        script_path = snapshot
     print(f"run_id={run_id} jobs={len(points)}", flush=True)
     for index, point in enumerate(points):
         case_id = f"case-{index:03d}"
-        command = job_command(options, run_id, case_id, point, script_path)
+        command = job_command(options, run_id, case_id, point)
         uri = f"s3://{options.bucket}/{options.prefix.strip('/')}/{run_id}/{case_id}/"
         if options.dry_run:
             print(shlex.join(command))
