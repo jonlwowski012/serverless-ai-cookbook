@@ -1,9 +1,0 @@
-{
-  "status": "checked",
-  "run_name": "flux-aloha-h200-onegpu-smoke-20261002T1620Z",
-  "check_name": "offline-val-cpu-one-window-20261002T1705Z",
-  "export_model_sha256": "ffa05a2137b696746f16526704dfd55a224b46aee0aca4f4a3085904012b0a2f",
-  "windows": 1,
-  "action_mse_normalized": 0.7700108289718628,
-  "action_mse_raw": 0.17172571922752208
-}

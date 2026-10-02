@@ -12,7 +12,7 @@ difficulty: advanced
 
 This demo trains the weights of [FLUX 3 Action base](https://docs.bfl.ai/flux_3/flux3_action_finetuning) and a new 14-action ALOHA head on **one Nebius H200**. It uses [ALOHA Static Cups Open](https://huggingface.co/datasets/lerobot/aloha_static_cups_open), a small MIT-licensed dataset. The model has its own [license](https://huggingface.co/black-forest-labs/flux-3-action-base) and requires access on Hugging Face. For a task LoRA on BFL's prepared SO-101 policy, use the [SO-101 demo](../flux-action-so101-pick-orange-task-lora/README.md).
 
-The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. A separate CPU job reloads the export and scores one reserved dataset window. This checks the path from published weights to inference; it does not measure robot success. [Nebius run evidence](e2e-results/README.md) includes a completed four-update smoke, a one-window reload, and a 3,000-update train. An independent reload of the full export is still pending.
+The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. A separate CPU job reloads the export and scores one reserved dataset window. Earlier Nebius runs completed the four-update smoke, its one-window reload, and a 3,000-update train. The full export has not yet been reloaded independently, and robot task success has not been measured.
 
 ## 1. Configure and build
 

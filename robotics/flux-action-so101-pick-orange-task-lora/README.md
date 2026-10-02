@@ -12,7 +12,7 @@ difficulty: advanced
 
 This demo trains a **task LoRA** on [BFL's prepared SO-101 policy](https://docs.bfl.ai/flux_3/flux3_action_so101). It uses one Nebius GPU Job and 60 demonstrations from [LeIsaac Pick Orange](https://huggingface.co/datasets/LightwheelAI/leisaac-pick-orange) (Apache 2.0). The model uses the [FLUX Kommunity License](https://huggingface.co/black-forest-labs/flux-3-action-so101). To train full weights for a different robot, use the [new embodiment demo](../flux-action-new-embodiment-full-finetune/README.md).
 
-The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. Calibration is still a candidate mapping: the [calibrated cloud smoke](e2e-results/README.md) ran end to end, but neither base nor adapter placed an orange in its one evaluation seed. The earlier 10,000-step results in that evidence folder used **uncalibrated** data and must not be treated as results of this recipe. Training alone does not establish policy quality.
+The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. An earlier calibrated 100-step Nebius smoke ran end to end, but neither base nor adapter placed an orange in its one evaluation seed. The 60,000-step calibrated run and 25-seed comparison have not completed. Training alone does not establish policy quality.
 
 ## 1. Configure and build
 
