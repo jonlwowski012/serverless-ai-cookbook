@@ -9,10 +9,9 @@ import sys
 from pathlib import Path
 
 import torch
-import torch.distributed as dist
 
 from flux_action.training.checkpoint import export_policy, latest_checkpoint
-from flux_action.training.distributed import barrier, init_distributed
+from flux_action.training.distributed import init_distributed
 from flux_action.training.trainer import TrainConfig, Trainer
 
 from prepare import prepare
@@ -37,16 +36,14 @@ class PublishingTrainer(Trainer):
 
     def _checkpoint(self) -> None:
         super()._checkpoint()
-        if self.rank == 0:
-            checkpoint = latest_checkpoint(self.output_dir)
-            if checkpoint is None:
-                raise RuntimeError("trainer did not write a complete checkpoint")
-            target = self.destination / "checkpoints" / checkpoint.name
-            copy_files(checkpoint, target)
-            shutil.copyfile(checkpoint / "COMPLETE", target / "COMPLETE")
-            shutil.copyfile(self.output_dir / "metrics.jsonl", self.destination / "metrics.jsonl")
-            print(f"Published {checkpoint.name}", flush=True)
-        barrier()
+        checkpoint = latest_checkpoint(self.output_dir)
+        if checkpoint is None:
+            raise RuntimeError("trainer did not write a complete checkpoint")
+        target = self.destination / "checkpoints" / checkpoint.name
+        copy_files(checkpoint, target)
+        shutil.copyfile(checkpoint / "COMPLETE", target / "COMPLETE")
+        shutil.copyfile(self.output_dir / "metrics.jsonl", self.destination / "metrics.jsonl")
+        print(f"Published {checkpoint.name}", flush=True)
 
 
 def worker() -> None:
@@ -56,34 +53,27 @@ def worker() -> None:
         raise FileNotFoundError("dataset preparation has not completed")
     if torch.cuda.device_count() != 1:
         raise RuntimeError("this example needs one visible GPU")
-    rank, _, _ = init_distributed()
-    try:
-        config = TrainConfig.from_file(WORK / "train.json")
-        PublishingTrainer(config, result).run()
-        barrier()
-        if rank == 0:
-            checkpoint = latest_checkpoint(config.output_dir)
-            if checkpoint is None or checkpoint.name != f"step-{config.steps}":
-                raise RuntimeError(f"missing final step-{config.steps} checkpoint")
-            export = WORK / "export"
-            export_policy(checkpoint, export, profile="model", dtype="bfloat16")
-            copy_files(export, result / "export")
-            model = result / "export" / "model.safetensors"
-            if not model.is_file():
-                raise FileNotFoundError(f"exported weights missing: {model}")
-            with model.open("rb") as stream:
-                model_hash = hashlib.file_digest(stream, "sha256").hexdigest()
-            receipt = {
-                "status": "trained", "run_name": run_name, "optimizer_updates": config.steps,
-                "checkpoint": f"checkpoints/{checkpoint.name}",
-                "export": "export", "export_model_sha256": model_hash,
-                "quality_evaluation": "pending",
-            }
-            (result / "TRAIN_COMPLETE.json").write_text(json.dumps(receipt, indent=2) + "\n")
-        barrier()
-    finally:
-        if dist.is_initialized():
-            dist.destroy_process_group()
+    init_distributed()
+    config = TrainConfig.from_file(WORK / "train.json")
+    PublishingTrainer(config, result).run()
+    checkpoint = latest_checkpoint(config.output_dir)
+    if checkpoint is None or checkpoint.name != f"step-{config.steps}":
+        raise RuntimeError(f"missing final step-{config.steps} checkpoint")
+    export = WORK / "export"
+    export_policy(checkpoint, export, profile="model", dtype="bfloat16")
+    copy_files(export, result / "export")
+    model = result / "export" / "model.safetensors"
+    if not model.is_file():
+        raise FileNotFoundError(f"exported weights missing: {model}")
+    with model.open("rb") as stream:
+        model_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+    receipt = {
+        "status": "trained", "run_name": run_name, "optimizer_updates": config.steps,
+        "checkpoint": f"checkpoints/{checkpoint.name}",
+        "export": "export", "export_model_sha256": model_hash,
+        "quality_evaluation": "pending",
+    }
+    (result / "TRAIN_COMPLETE.json").write_text(json.dumps(receipt, indent=2) + "\n")
 
 
 def main() -> None:

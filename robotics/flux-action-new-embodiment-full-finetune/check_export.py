@@ -59,13 +59,9 @@ def main() -> None:
     )
     if (index / "manifest.json").read_bytes() != (run / "manifest.json").read_bytes():
         raise ValueError("rebuilt dataset index differs from the published training index")
-    device = os.environ.get("CHECK_DEVICE", "cuda")
-    max_windows = int(os.environ.get("CHECK_MAX_WINDOWS", "20"))
-    if device not in ("cuda", "cpu") or max_windows < 1:
-        raise ValueError("CHECK_DEVICE must be cuda or cpu and CHECK_MAX_WINDOWS must be positive")
     report = evaluate_export(
-        export, source, index, output=check / "offline-val.json", device=device,
-        split="val", windows_per_episode=min(4, max_windows), max_windows=max_windows,
+        export, source, index, output=check / "offline-val.json", device="cpu",
+        split="val", windows_per_episode=1, max_windows=1,
         frame_hw=tuple(config["frame_hw"]), decoder=config["decoder"],
     )
     for key in ("action_mse_normalized", "action_mse_raw"):
@@ -74,7 +70,7 @@ def main() -> None:
     (check / "COMPLETE.json").write_text(json.dumps({
         "status": "checked", "run_name": run_name, "check_name": check_name,
         "export_model_sha256": digest, "windows": report["n_windows"],
-        "device": device,
+        "device": "cpu",
         "action_mse_normalized": report["action_mse_normalized"],
         "action_mse_raw": report["action_mse_raw"],
     }, indent=2) + "\n")

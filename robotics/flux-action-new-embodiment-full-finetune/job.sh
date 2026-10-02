@@ -35,8 +35,7 @@ command=(nebius ai job create --profile "$NEBIUS_PROFILE"
   --env "RUN_NAME=$RUN_NAME" --env "IMAGE_REF=$NEBIUS_IMAGE"
   --env PYTHONUNBUFFERED=1 --env FLUX_ACTION_PG_TIMEOUT_MINUTES=120)
 if [[ $mode == check ]]; then
-  command+=(--env "CHECK_NAME=$CHECK_NAME" --env CHECK_DEVICE=cpu
-    --env CHECK_MAX_WINDOWS=1 --env OMP_NUM_THREADS=16)
+  command+=(--env "CHECK_NAME=$CHECK_NAME" --env OMP_NUM_THREADS=16)
 fi
 if [[ -n ${NEBIUS_HF_TOKEN_SECRET:-} ]]; then
   command+=(--env-secret "HF_TOKEN=$NEBIUS_HF_TOKEN_SECRET")

@@ -151,7 +151,6 @@ def main() -> None:
     result = bucket / "runs" / run_name
     result.mkdir(parents=True, exist_ok=False)
     steps = training_steps(mode)
-    wandb_enabled = bool(os.environ.get("WANDB_API_KEY"))
     record = {
         "run_name": run_name,
         "mode": mode,
@@ -161,11 +160,6 @@ def main() -> None:
         "microsteps": steps,
         "optimizer_updates": steps // 4,
         "calibration_id": CALIBRATION_ID,
-        "wandb": {
-            "enabled": wandb_enabled,
-            "project": (os.environ.get("WANDB_PROJECT") or "flux-so101-orange") if wandb_enabled else None,
-            "entity": os.environ.get("WANDB_ENTITY") if wandb_enabled else None,
-        },
     }
     work = Path("/workspace/work")
     work.mkdir(parents=True, exist_ok=False)
