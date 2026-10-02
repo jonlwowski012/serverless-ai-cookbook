@@ -1,0 +1,320 @@
+{
+  "model": "adapter",
+  "policy": {
+    "ready": true,
+    "model": "adapter",
+    "checkpoint": "/workspace/work/checkpoint/pretrained_model",
+    "adapter_sha256": "bc40f5ab2e1ebddec2c8c8ea85185bad8c43640e7a2290974cd78e235134cbab"
+  },
+  "dataset": "LightwheelAI/leisaac-pick-orange",
+  "dataset_revision": "fa6e0625d814352b8e6ee1c6d2482194e4da8ed3",
+  "leisaac_revision": "24d3bcd3f1e4585740fc79921782c41617237812",
+  "task": "LeIsaac-SO101-PickOrange-v0",
+  "seed_start": 42005,
+  "episode_length_s": 120.0,
+  "control_hz": 30,
+  "physics_hz": 60,
+  "physics_steps_per_action": 1,
+  "episodes": [
+    {
+      "episode": 0,
+      "seed": 42005,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 891.92,
+      "video": null
+    },
+    {
+      "episode": 1,
+      "seed": 42006,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 891.94,
+      "video": null
+    },
+    {
+      "episode": 2,
+      "seed": 42007,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 862.73,
+      "video": null
+    },
+    {
+      "episode": 3,
+      "seed": 42008,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 832.63,
+      "video": null
+    },
+    {
+      "episode": 4,
+      "seed": 42009,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 878.28,
+      "video": null
+    },
+    {
+      "episode": 5,
+      "seed": 42010,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 835.41,
+      "video": null
+    },
+    {
+      "episode": 6,
+      "seed": 42011,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 869.02,
+      "video": null
+    },
+    {
+      "episode": 7,
+      "seed": 42012,
+      "oranges_placed": 2,
+      "placed": [
+        false,
+        true,
+        true
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 861.35,
+      "video": null
+    },
+    {
+      "episode": 8,
+      "seed": 42013,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 866.0,
+      "video": null
+    },
+    {
+      "episode": 9,
+      "seed": 42014,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 888.66,
+      "video": null
+    },
+    {
+      "episode": 10,
+      "seed": 42015,
+      "oranges_placed": 1,
+      "placed": [
+        false,
+        true,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 860.19,
+      "video": null
+    },
+    {
+      "episode": 11,
+      "seed": 42016,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 872.2,
+      "video": null
+    },
+    {
+      "episode": 12,
+      "seed": 42017,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 843.3,
+      "video": null
+    },
+    {
+      "episode": 13,
+      "seed": 42018,
+      "oranges_placed": 1,
+      "placed": [
+        false,
+        true,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 866.75,
+      "video": null
+    },
+    {
+      "episode": 14,
+      "seed": 42019,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 839.68,
+      "video": null
+    },
+    {
+      "episode": 15,
+      "seed": 42020,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 822.92,
+      "video": null
+    },
+    {
+      "episode": 16,
+      "seed": 42021,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 874.97,
+      "video": null
+    },
+    {
+      "episode": 17,
+      "seed": 42022,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 856.4,
+      "video": null
+    },
+    {
+      "episode": 18,
+      "seed": 42023,
+      "oranges_placed": 3,
+      "placed": [
+        true,
+        true,
+        true
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 841.51,
+      "video": null
+    },
+    {
+      "episode": 19,
+      "seed": 42024,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 826.64,
+      "video": null
+    }
+  ]
+}

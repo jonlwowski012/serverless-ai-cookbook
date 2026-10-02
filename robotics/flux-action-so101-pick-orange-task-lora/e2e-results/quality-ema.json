@@ -1,0 +1,22 @@
+{
+  "task": "LeIsaac-SO101-PickOrange-v0",
+  "episodes_per_policy": 25,
+  "base_oranges_placed": 0,
+  "adapter_oranges_placed": 9,
+  "oranges_possible": 75,
+  "paired_improvement": 9,
+  "paired_episode_bootstrap_95pct_difference": [
+    3,
+    17
+  ],
+  "base_full_task_successes": 0,
+  "adapter_full_task_successes": 0,
+  "published_act_reference": {
+    "model": "wsagi/ACT-PickOrange",
+    "oranges_placed": 33,
+    "oranges_possible": 75,
+    "episodes": 25
+  },
+  "quality_pass": false,
+  "note": "ACT's published 33/75 used its own runs and policy; it is context, not a FLUX reproduction target on identical seeds."
+}

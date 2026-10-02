@@ -1,0 +1,37 @@
+{
+  "model": "base",
+  "policy": {
+    "ready": true,
+    "model": "base",
+    "checkpoint": "black-forest-labs/flux-3-action-so101",
+    "adapter_sha256": null,
+    "calibration_id": "leisaac-24d3bcd-to-flux-so101-hf-sim-73899a12"
+  },
+  "dataset": "LightwheelAI/leisaac-pick-orange",
+  "dataset_revision": "fa6e0625d814352b8e6ee1c6d2482194e4da8ed3",
+  "calibration_id": "leisaac-24d3bcd-to-flux-so101-hf-sim-73899a12",
+  "leisaac_revision": "24d3bcd3f1e4585740fc79921782c41617237812",
+  "task": "LeIsaac-SO101-PickOrange-v0",
+  "seed_start": 42000,
+  "episode_length_s": 120.0,
+  "control_hz": 30,
+  "physics_hz": 60,
+  "physics_steps_per_action": 1,
+  "episodes": [
+    {
+      "episode": 0,
+      "seed": 42000,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 853.73,
+      "video": "/workspace/work/eval-base-calibrated-smoke/base-rollouts/episode-00.mp4"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+ "format_version": 1,
+ "split": "val",
+ "dataset_id": "lerobot/aloha_static_cups_open",
+ "episodes": 5,
+ "n_windows": 1,
+ "windows_per_episode": 1,
+ "action_mse_normalized": 0.7700108289718628,
+ "action_mse_normalized_median": 0.7700108289718628,
+ "action_mse_raw": 0.17172571922752208,
+ "action_mse_raw_per_channel": [
+  0.0008292197016999125,
+  0.4832077920436859,
+  0.17615801095962524,
+  0.0018858173862099648,
+  0.22632227838039398,
+  0.04181113466620445,
+  0.1591561883687973,
+  0.003463522531092167,
+  0.4747963845729828,
+  0.10566359013319016,
+  0.014650050550699234,
+  0.05970410257577896,
+  0.5453077554702759,
+  0.11120422184467316
+ ],
+ "action_names": [
+  "left_waist",
+  "left_shoulder",
+  "left_elbow",
+  "left_forearm_roll",
+  "left_wrist_angle",
+  "left_wrist_rotate",
+  "left_gripper",
+  "right_waist",
+  "right_shoulder",
+  "right_elbow",
+  "right_forearm_roll",
+  "right_wrist_angle",
+  "right_wrist_rotate",
+  "right_gripper"
+ ],
+ "inference": {
+  "sampler": "cosmos_unipc",
+  "num_inference_steps": 1,
+  "sampler_shift": 5.0,
+  "guidance_scale": 1.0,
+  "guidance_scale_action": null,
+  "inference_seed": 0,
+  "action_parameterization": "absolute"
+ },
+ "seconds": 35.28241417300001,
+ "windows": [
+  {
+   "episode_index": 45,
+   "start": 1,
+   "task": "Pick up the plastic cup and open its lid.",
+   "action_mse_normalized": 0.7700108289718628,
+   "action_mse_raw": 0.17172571922752208
+  }
+ ],
+ "checkpoint": "/workspace/work/export",
+ "checkpoint_manifest": {
+  "format_version": 1,
+  "kind": "policy_export",
+  "weight_profile": "model",
+  "sha256": {
+   "config.json": "2fe74ad193063c9f4657584158c5f88357b809b9f5c01c407c3a87dea6efbef9",
+   "model.safetensors": "ffa05a2137b696746f16526704dfd55a224b46aee0aca4f4a3085904012b0a2f"
+  }
+ },
+ "index_manifest_sha256": "0b8021f70fb4d91f8a8e0f3290cf5bafcd1000ed8f827be33a1fb4191f339092"
+}

@@ -1,0 +1,95 @@
+{
+  "model": "adapter",
+  "policy": {
+    "ready": true,
+    "model": "adapter",
+    "checkpoint": "/workspace/work/checkpoint/pretrained_model",
+    "adapter_sha256": "bc40f5ab2e1ebddec2c8c8ea85185bad8c43640e7a2290974cd78e235134cbab"
+  },
+  "dataset": "LightwheelAI/leisaac-pick-orange",
+  "dataset_revision": "fa6e0625d814352b8e6ee1c6d2482194e4da8ed3",
+  "leisaac_revision": "24d3bcd3f1e4585740fc79921782c41617237812",
+  "task": "LeIsaac-SO101-PickOrange-v0",
+  "seed_start": 42000,
+  "episode_length_s": 120.0,
+  "control_hz": 30,
+  "physics_hz": 60,
+  "physics_steps_per_action": 1,
+  "episodes": [
+    {
+      "episode": 0,
+      "seed": 42000,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 839.58,
+      "video": "/workspace/work/eval-ema-physics1/adapter-episode-00/adapter-rollouts/episode-00.mp4"
+    },
+    {
+      "episode": 1,
+      "seed": 42001,
+      "oranges_placed": 1,
+      "placed": [
+        false,
+        true,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 899.17,
+      "video": "/workspace/work/eval-ema-physics1/adapter-episode-01/adapter-rollouts/episode-00.mp4"
+    },
+    {
+      "episode": 2,
+      "seed": 42002,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 896.29,
+      "video": "/workspace/work/eval-ema-physics1/adapter-episode-02/adapter-rollouts/episode-00.mp4"
+    },
+    {
+      "episode": 3,
+      "seed": 42003,
+      "oranges_placed": 1,
+      "placed": [
+        false,
+        true,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 839.21,
+      "video": null
+    },
+    {
+      "episode": 4,
+      "seed": 42004,
+      "oranges_placed": 0,
+      "placed": [
+        false,
+        false,
+        false
+      ],
+      "full_task_success": false,
+      "timed_out": true,
+      "steps": 7200,
+      "wall_seconds": 851.3,
+      "video": null
+    }
+  ]
+}
