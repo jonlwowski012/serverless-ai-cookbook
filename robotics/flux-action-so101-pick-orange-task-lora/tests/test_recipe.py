@@ -160,6 +160,10 @@ class RecipeTests(unittest.TestCase):
             checkpoint.mkdir(parents=True)
             (checkpoint / "adapter_model.safetensors").write_bytes(b"adapter")
             (checkpoint / "adapter_config.json").write_text("{}")
+            ema = checkpoint.parent / "pretrained_model_ema"
+            ema.mkdir()
+            (ema / "adapter_model.safetensors").write_bytes(b"ema-adapter")
+            (ema / "adapter_config.json").write_text("{}")
             target = root / "bucket"
             self.assertEqual(publish.publish(root / "local", target), [])
             (root / "local/checkpoints/last").symlink_to("000100")
@@ -168,7 +172,19 @@ class RecipeTests(unittest.TestCase):
             self.assertEqual(records[0]["directory"], "000100")
             marker = target / "checkpoints/000100/COMPLETE.json"
             self.assertTrue(marker.is_file())
+            published = target / "checkpoints/000100"
+            self.assertEqual(publish.verify_adapter(published / "pretrained_model", records[0]),
+                             records[0]["adapter_sha256"])
+            self.assertEqual(publish.verify_adapter(published / "pretrained_model_ema", records[0]),
+                             records[0]["ema_adapter_sha256"])
+            self.assertNotEqual(records[0]["adapter_sha256"], records[0]["ema_adapter_sha256"])
             self.assertEqual(publish.publish(root / "local", target), records)
+            with self.assertRaisesRegex(ValueError, "no published checksum"):
+                publish.verify_adapter(published / "pretrained_model_ema",
+                                       {"adapter_sha256": records[0]["adapter_sha256"]})
+            (published / "pretrained_model_ema/adapter_model.safetensors").write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                publish.verify_adapter(published / "pretrained_model_ema", records[0])
             with self.assertRaisesRegex(ValueError, "calibration differs"):
                 publish.publish(root / "local", target, calibration.ID)
 

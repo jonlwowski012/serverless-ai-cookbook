@@ -3,7 +3,7 @@
   "mode": "full",
   "status": "trained",
   "started_utc": "2026-09-30T23:07:27.334787+00:00",
-  "image": "cr.me-west1.nebius.cloud/i00vj855ar9jshj0nd/flux-so101-orange:e2e-20260930-checkpointfix",
+  "image": "[tenant registry removed from committed copy]",
   "recipe": {
     "dataset": {
       "repo_id": "LightwheelAI/leisaac-pick-orange",

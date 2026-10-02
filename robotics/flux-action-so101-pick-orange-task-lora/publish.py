@@ -7,6 +7,30 @@ import shutil
 from pathlib import Path
 
 
+ADAPTER_HASH_KEYS = {
+    "pretrained_model": "adapter_sha256",
+    "pretrained_model_ema": "ema_adapter_sha256",
+}
+
+
+def adapter_hash(path: Path) -> str:
+    adapter = path / "adapter_model.safetensors"
+    if not adapter.is_file() or not (path / "adapter_config.json").is_file():
+        raise ValueError(f"incomplete adapter checkpoint: {path}")
+    with adapter.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def verify_adapter(path: Path, record: dict) -> str:
+    key = ADAPTER_HASH_KEYS.get(path.name)
+    if key is None or key not in record:
+        raise ValueError(f"no published checksum for adapter checkpoint: {path}")
+    actual = adapter_hash(path)
+    if actual != record[key]:
+        raise ValueError("published adapter checksum mismatch")
+    return actual
+
+
 def publish(source: Path, destination: Path, calibration_id: str | None = None) -> list[dict]:
     checkpoints = source / "checkpoints"
     last = checkpoints / "last"
@@ -37,13 +61,11 @@ def publish(source: Path, destination: Path, calibration_id: str | None = None) 
             elif path.is_file():
                 output.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, output)
-        adapter = target / "pretrained_model/adapter_model.safetensors"
-        config = target / "pretrained_model/adapter_config.json"
-        if not adapter.is_file() or not config.is_file():
-            raise ValueError(f"incomplete checkpoint {checkpoint.name}")
-        with adapter.open("rb") as stream:
-            digest = hashlib.file_digest(stream, "sha256").hexdigest()
-        record = {"step": int(checkpoint.name), "directory": checkpoint.name, "adapter_sha256": digest}
+        record = {"step": int(checkpoint.name), "directory": checkpoint.name}
+        for directory, key in ADAPTER_HASH_KEYS.items():
+            path = target / directory
+            if directory == "pretrained_model" or path.exists():
+                record[key] = adapter_hash(path)
         if calibration_id is not None:
             record["calibration_id"] = calibration_id
         marker.write_text(json.dumps(record, indent=2) + "\n")

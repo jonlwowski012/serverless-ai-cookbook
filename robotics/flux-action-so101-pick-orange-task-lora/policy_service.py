@@ -1,7 +1,6 @@
 """Synchronous FLUX policy service for the separate Isaac Sim evaluation process."""
 
 import base64
-import hashlib
 import json
 import os
 import zlib
@@ -17,6 +16,7 @@ from lerobot.policies.flux3 import Flux3Policy
 from lerobot.policies.flux3.configuration_flux3 import Flux3Config
 
 from calibration import ID as CALIBRATION_ID, to_motor, to_policy
+from publish import verify_adapter
 
 RECIPE = json.loads((Path(__file__).parent / "recipe.json").read_text())
 
@@ -33,18 +33,11 @@ def load_policy():
         path = base
     elif variant == "adapter":
         path = Path(os.environ["CHECKPOINT_DIR"])
-        adapter = path / "adapter_model.safetensors"
-        if not adapter.is_file():
-            raise FileNotFoundError(f"adapter checkpoint missing: {path}")
         marker = path.parent / "COMPLETE.json"
         published = json.loads(marker.read_text())
         if published.get("calibration_id") != CALIBRATION_ID:
             raise ValueError("adapter was trained with a different or unrecorded SO-101 calibration")
-        expected = published["adapter_sha256"]
-        with adapter.open("rb") as stream:
-            actual = hashlib.file_digest(stream, "sha256").hexdigest()
-        if actual != expected:
-            raise ValueError("published adapter checksum mismatch")
+        actual = verify_adapter(path, published)
     else:
         raise ValueError("MODEL_VARIANT must be base or adapter")
     config = Flux3Config.from_pretrained(path)

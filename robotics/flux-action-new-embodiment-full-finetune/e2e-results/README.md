@@ -1,9 +1,8 @@
 # Nebius cloud validation, October 2, 2026
 
-The one-H200 smoke Job `aijob-u00zq9r3tdnya9wj6z` reached provider state
-`COMPLETED`. Its durable run prefix is
-`s3://flux-action-droid-cookbook-us-20260930-1800/runs/flux-aloha-h200-onegpu-smoke-20261002T1620Z/`
-in us-central1. The Job used the pinned ALOHA dataset revision
+The one-H200 smoke Job reached provider state `COMPLETED`. Its durable Object
+Storage run prefix is `runs/flux-aloha-h200-onegpu-smoke-20261002T1620Z/` in
+us-central1; the tenant bucket name is omitted here. The Job used the pinned ALOHA dataset revision
 `d793c969cf716001dcca18a0842c3d7e9de9e41b` and base revision
 `62878e2925e59b7a89ec14463ce89932624c490d`.
 
@@ -20,7 +19,7 @@ SHA-256 `ffa05a2137b696746f16526704dfd55a224b46aee0aca4f4a3085904012b0a2f`.
 The exported policy config has a 14-value ALOHA action head, three ordered
 cameras, 50 Hz timing, and absolute actions.
 
-The separate CPU Job `aijob-u00vfd9eq2fvgj2jf8` reached `COMPLETED`. It copied
+The separate CPU Job reached `COMPLETED`. It copied
 and re-hashed the published export, rebuilt the pinned dataset index, reloaded
 the policy, and inferred one reserved validation window. Its
 [completion receipt](check-complete.json) has the same model SHA-256, normalized
@@ -32,23 +31,23 @@ The live CPU Job injected a one-window variant of `check_export.py`; the
 equivalent `cpu-d3` option is now in `job.sh` and `check_export.py`.
 
 One CPU window is a functional check. It is not a policy quality benchmark;
-the 20-window GPU score, 3,000-update schedule, and robot task success remain
-unverified.
+the 20-window GPU score and robot task success remain unverified.
 
-## Long-run checkpoint progress
+## Long-run training completion
 
-The one-H200 3,000-update Job `aijob-u00kkydywtsxkrmxsy` uses run prefix
-`s3://flux-action-droid-cookbook-us-20260930-1800/runs/flux-aloha-h200-onegpu-full-20261002T1715Z/`.
+The one-H200 3,000-update Job reached provider state `COMPLETED` and uses
+Object Storage run prefix `runs/flux-aloha-h200-onegpu-full-20261002T1715Z/`.
 It prepared the same pinned 50-episode dataset, trained through trunk unfreeze
 at step 200, and wrote its first scheduled checkpoint at step 500. Object
 Storage contains `checkpoints/step-500/COMPLETE`, the 13,894,976,571-byte model
 shard, and the 27,638,354,199-byte optimizer shard. The Job subsequently
-published steps 1,000, 1,500, 2,000, and 2,500, with finite losses and
-68.6 GB reported peak GPU memory. The step-2,500 completion marker was
-verified in Object Storage. This is a
-progress record, not a terminal result; require Job `COMPLETED`, a step-3000
-checkpoint, final export, and an independent check before calling the long
-schedule complete.
+published steps 1,000, 1,500, 2,000, 2,500, and 3,000, with finite losses and
+68.6 GB reported peak GPU memory. The step-3,000 completion marker, the
+13,894,319,672-byte final export, and `TRAIN_COMPLETE.json` were verified in
+Object Storage. The receipt records 3,000 optimizer updates and export SHA-256
+`fa3422e70c1d2db5ed5f02329091393048867912c35bdde87316b43768b2b7a8`.
+An independent reload and validation check of this long-run export remains
+pending; the CPU check above evaluated the separate four-update smoke export.
 
 ## Standalone image build
 
