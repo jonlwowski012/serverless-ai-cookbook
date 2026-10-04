@@ -1,7 +1,6 @@
 """Submit one Nebius AI Job per Franka pick-and-place sweep point."""
 
 import argparse
-import itertools
 import json
 import math
 import re
@@ -14,29 +13,32 @@ from pathlib import Path
 
 
 def expand_sweep(config):
-    axes = ("pick_x", "place_y")
-    if set(config) != set(axes):
+    if not isinstance(config, dict) or set(config) != {"pick_x", "place_y"}:
         raise ValueError("sweep.json must contain only pick_x and place_y")
-    for axis in axes:
+    for axis in ("pick_x", "place_y"):
         values = config[axis]
-        if not isinstance(values, list) or not values or any(
-            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
-            for value in values
-        ):
+        if not isinstance(values, list) or not values:
             raise ValueError(f"{axis} must be a nonempty list of finite numbers")
-    return [dict(zip(axes, values)) for values in itertools.product(*(config[axis] for axis in axes))]
+        for value in values:
+            is_number = isinstance(value, (int, float)) and not isinstance(value, bool)
+            if not is_number or not math.isfinite(value):
+                raise ValueError(f"{axis} must be a nonempty list of finite numbers")
+    cases = []
+    for pick_x in config["pick_x"]:
+        for place_y in config["place_y"]:
+            cases.append({"pick_x": pick_x, "place_y": place_y})
+    return cases
 
 
 def job_command(options, run_id, case_id, point):
-    container_args = shlex.join(
-        [
-            "/opt/isaac-sweep/run.py",
-            "--run-id", run_id,
-            "--case-id", case_id,
-            "--pick-x", str(point["pick_x"]),
-            "--place-y", str(point["place_y"]),
-        ]
-    )
+    # Nebius takes the container arguments as one CLI value.
+    container_args = [
+        "/opt/isaac-sweep/run.py",
+        "--run-id", run_id,
+        "--case-id", case_id,
+        "--pick-x", str(point["pick_x"]),
+        "--place-y", str(point["place_y"]),
+    ]
     command = [
         "nebius", "ai", "job", "create",
         "--name", f"isaac-pick-{run_id}-{case_id}",
@@ -53,7 +55,7 @@ def job_command(options, run_id, case_id, point):
         "--env", f"S3_PREFIX={options.prefix.strip('/')}",
         "--env-secret", f"AWS_ACCESS_KEY_ID={options.access_key_secret}",
         "--env-secret", f"AWS_SECRET_ACCESS_KEY={options.secret_key_secret}",
-        "--args", container_args,
+        "--args", shlex.join(container_args),
         "--format", "jsonpath={.metadata.id}",
     ]
     if options.subnet_id:
@@ -70,7 +72,7 @@ def job_id_from_output(output):
     return ids.pop()
 
 
-def main():
+def parse_inputs():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path(__file__).with_name("sweep.json"))
     parser.add_argument("--image", required=True, help="pushed image built from this recipe's Dockerfile")
@@ -87,13 +89,29 @@ def main():
     parser.add_argument("--profile", help="Nebius CLI profile (defaults to the active profile)")
     parser.add_argument("--dry-run", action="store_true")
     options = parser.parse_args()
-
     if not options.prefix.strip("/"):
         parser.error("--prefix must contain a path component")
     try:
         points = expand_sweep(json.loads(options.config.read_text()))
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
+    return options, points
+
+
+def create_job(command, manifest):
+    try:
+        created = subprocess.run(command, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        print(exc.stderr, file=sys.stderr)
+        raise SystemExit(f"submission stopped; earlier job IDs are in {manifest}") from exc
+    try:
+        return job_id_from_output(created.stdout + created.stderr)
+    except ValueError as exc:
+        raise SystemExit(f"{exc}; inspect Nebius Jobs before retrying; earlier IDs are in {manifest}") from exc
+
+
+def main():
+    options, points = parse_inputs()
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     manifest = Path(__file__).with_name("runs") / run_id / "jobs.jsonl"
@@ -107,15 +125,7 @@ def main():
         if options.dry_run:
             print(shlex.join(command))
             continue
-        try:
-            created = subprocess.run(command, check=True, capture_output=True, text=True)
-        except subprocess.CalledProcessError as exc:
-            print(exc.stderr, file=sys.stderr)
-            raise SystemExit(f"submission stopped; earlier job IDs are in {manifest}") from exc
-        try:
-            job_id = job_id_from_output(created.stdout + created.stderr)
-        except ValueError as exc:
-            raise SystemExit(f"{exc}; inspect Nebius Jobs before retrying; earlier IDs are in {manifest}") from exc
+        job_id = create_job(command, manifest)
         with manifest.open("a") as output:
             output.write(json.dumps({"case_id": case_id, "params": point, "job_id": job_id, "s3_uri": uri}) + "\n")
         print(f"{case_id} {job_id} {uri}", flush=True)
