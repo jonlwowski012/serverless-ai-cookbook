@@ -30,6 +30,8 @@ def copy_files(source: Path, destination: Path) -> None:
 
 
 class PublishingTrainer(Trainer):
+    """Copy each checkpoint to the bucket only after the trainer completes it."""
+
     def __init__(self, config: TrainConfig, destination: Path):
         super().__init__(config)
         self.destination = destination
