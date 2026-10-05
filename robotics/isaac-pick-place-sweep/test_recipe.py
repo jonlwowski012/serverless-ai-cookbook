@@ -30,6 +30,7 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual(len({command[command.index("--name") + 1] for command in commands}), 4)
         self.assertTrue(all(command.count("--env-secret") == 2 for command in commands))
         self.assertTrue(all("--args" in command for command in commands))
+        self.assertTrue(all("--async" in command for command in commands))
         self.assertTrue(all("--container-command" not in command for command in commands))
         self.assertTrue(all("--inject-file" not in command for command in commands))
         self.assertTrue(all(command[command.index("--image") + 1] == options.image for command in commands))

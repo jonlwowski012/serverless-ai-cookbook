@@ -32,7 +32,7 @@ docker build --platform linux/amd64 -t "$IMAGE" .
 docker push "$IMAGE"
 ~~~
 
-Use the [registry quickstart](https://docs.nebius.com/container-registry/quickstart) to find your registry path. Change the Dockerfile to add packages or assets, or change run.py to edit the task. Push a new image tag after either change.
+Use the [registry quickstart](https://docs.nebius.com/container-registry/quickstart) to find your registry path.
 
 ## 2. Set the bucket and secret
 
@@ -58,9 +58,10 @@ This first case uses the positions in [NVIDIA's 6.1 example](https://docs.isaacs
 ~~~bash
 export RUN_ID="single-$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
 export CASE_ID='case-000'
-JOB_ID=$(nebius ai job create \
+nebius ai job create \
   --name "isaac-pick-$RUN_ID" \
   --image "$IMAGE" \
+  --async \
   --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb --timeout 2h \
   --env ACCEPT_EULA=Y --env PRIVACY_CONSENT=Y \
   --env "S3_BUCKET=$S3_BUCKET" \
@@ -69,16 +70,13 @@ JOB_ID=$(nebius ai job create \
   --env S3_PREFIX=isaac-pick-place \
   --env-secret "AWS_ACCESS_KEY_ID=$S3_SECRET" \
   --env-secret "AWS_SECRET_ACCESS_KEY=$S3_SECRET" \
-  --args "--run-id $RUN_ID --case-id $CASE_ID --pick-x 0.4 --place-y 0.2" \
-  --format 'jsonpath={.metadata.id}')
-echo "$JOB_ID"
+  --args "--run-id $RUN_ID --case-id $CASE_ID --pick-x 0.4 --place-y 0.2"
 ~~~
 
-To use another RTX platform or Nebius CLI profile, change the platform and preset or add --profile.
-
-Check the job, then inspect the published result:
+Copy the printed job ID into JOB_ID. The `--async` flag returns after submission, so you can follow the job and inspect its result:
 
 ~~~bash
+export JOB_ID='<job-id-from-output>'
 nebius ai job logs "$JOB_ID" --follow
 nebius ai job get "$JOB_ID" --format json
 aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/$CASE_ID/" \
@@ -92,7 +90,7 @@ The case prefix should contain result.json and an empty COMPLETE object. COMPLET
 
 ## 4. Run the four-job sweep
 
-Edit sweep.json to change the pickup X or placement Y values. The two arrays form a grid: two values on each axis create four separate jobs. Inspect the requests, then submit:
+The two arrays in sweep.json form a grid: two values on each axis create four separate jobs. Inspect the requests, then submit:
 
 ~~~bash
 python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
@@ -101,7 +99,7 @@ python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
   --region "$REGION" --s3-secret "$S3_SECRET"
 ~~~
 
-The launcher prints each job ID and S3 path. It also writes runs/<run-id>/jobs.jsonl as jobs are submitted, so earlier IDs remain available if a later submission fails. Use a job ID to check logs and status as above. To list every result after the jobs finish:
+The launcher submits without waiting for each simulation, prints each job ID and S3 path, and writes runs/<run-id>/jobs.jsonl. Earlier IDs remain available if a later submission fails. Use a job ID to check logs and status as above. To list every result after the jobs finish:
 
 ~~~bash
 export RUN_ID='<run-id-from-launch-output>'
@@ -110,6 +108,16 @@ aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/" --recursive \
 ~~~
 
 Each case should have result.json and COMPLETE. Compare the success and error fields across cases; the sweep is a small example, not a robot benchmark.
+
+## Verified run
+
+On October 5, 2026, the Isaac Sim 6.1.0 image was built from this Dockerfile and pushed with digest `sha256:0b944f3a0120190246adf0cb8ecc61ec88f0f546abdf76a027eb1e6ecf81cedc`. On `gpu-l40s-a`, single job `aijob-e00qw0k4wzpdcct5yw` completed with `success: true` and 1.17 cm XY error. Sweep run `20261005T172716Z-e53b186b` submitted four jobs; all four completed with `success: true` and 1.17–1.27 cm XY error. Every case had both S3 objects.
+
+The worker reported an NVIDIA L40S with 46,068 MB VRAM and driver 580.173.02. NVIDIA lists Linux driver 595.58.03 in its [6.1 requirements](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/installation/requirements.html). This headless task passed on the tested worker, but its driver is below NVIDIA's listed version.
+
+## Optional customization
+
+Edit sweep.json for other pickup X or placement Y values. Change the Dockerfile to add packages or assets, or change run.py to edit the task; push a new image tag after either change. To use another RTX platform or Nebius CLI profile, change the platform and preset or add `--profile` to the commands.
 
 ## Optional local GPU check
 

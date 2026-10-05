@@ -42,6 +42,7 @@ def job_command(options, run_id, case_id, point):
         "nebius", "ai", "job", "create",
         "--name", f"isaac-pick-{run_id}-{case_id}",
         "--image", options.image,
+        "--async",
         "--platform", options.platform,
         "--preset", options.preset,
         "--timeout", options.timeout,
