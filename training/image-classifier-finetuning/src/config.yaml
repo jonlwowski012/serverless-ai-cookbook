@@ -1,0 +1,7 @@
+# Change these values to use another labeled Hugging Face image dataset.
+# This demo expects image/label columns and train/validation/test splits.
+dataset_name: aleksandr-dzhumurat/art-genre-classification-slim
+dataset_revision: d7987ab8d5cb337a50e19b004663e3ac07f7f404
+model_name: google/vit-base-patch16-224
+epochs: 1
+batch_size: 16

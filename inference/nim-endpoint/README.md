@@ -110,7 +110,6 @@ nebius ai endpoint create \
   --disk-size 150Gi \
   --subnet-id "$SUBNET_ID" \
   --env NGC_API_KEY="$NGC_API_KEY" \
-  --public \
   --auth token \
   --token "$AUTH_TOKEN"
 ```
@@ -124,9 +123,8 @@ nebius ai endpoint create \
 ```bash
 export ENDPOINT_ID=$(nebius ai endpoint get-by-name --parent-id "$PROJECT_ID" \
   --name "$NIM_NAME" --format jsonpath='{.metadata.id}')
-export ENDPOINT_IP=$(nebius ai endpoint get "$ENDPOINT_ID" \
-  --format json | jq -r '.status.public_endpoints[0]')
-export URL="http://${ENDPOINT_IP}"
+export URL=$(nebius ai endpoint get "$ENDPOINT_ID" --format json \
+  | jq -r '.status.public_endpoints[] | select(startswith("https://"))' | head -1)
 
 # repeat until it returns {"status":"ready"} (a few minutes on first boot)
 curl -s "$URL/v1/health/ready" -H "Authorization: Bearer $AUTH_TOKEN"
@@ -200,7 +198,7 @@ Notes:
 
 - **Any NIM:** change `NIM_IMAGE` (browse <https://build.nvidia.com/>), then set `PLATFORM`/`PRESET` to a GPU that meets its support matrix.
 - **Cheaper/bigger GPU:** `gpu-rtx6000` (48 GB) is the cheapest GPU here; use `gpu-h200-sxm`/`gpu-b200-sxm` for larger models. List options with `nebius compute platform list`.
-- **Private by default:** drop `--public` to keep the endpoint on the VPC only; reach it from `status.private_endpoints[0]`.
+- **Managed HTTPS:** HTTP ports remain reachable through the managed URL without `--public`. Token authentication controls access; `--public` only adds a separate public IP.
 - **Secrets:** use `--env-secret` / `--registry-secret` (MysteryBox) instead of plaintext for anything sensitive.
 
 ## Troubleshooting

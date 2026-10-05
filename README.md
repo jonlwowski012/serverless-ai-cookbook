@@ -2,29 +2,36 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 
-Run GPU workloads on [Nebius Serverless](https://nebius.com/services/serverless) — no infrastructure management, per-second billing, GPU in minutes.
+Learn to run common tasks on [Nebius Serverless](https://nebius.com/services/serverless) with small, runnable examples. Each example shows the inputs, the commands, and how to check the result.
 
 This repo contains runnable code samples for **Serverless AI Jobs** (batch workloads that auto-terminate) and **Endpoints** (persistent HTTP-accessible services), plus **1-click templates** that open the Nebius Console with fields pre-filled. Examples cover model training, fine-tuning, inference serving, AI agents, and scientific simulations.
 
-## Quickstart (30 seconds)
+## Run your first GPU Job
 
-Spin up a GPU job and verify your setup:
+Complete the [prerequisites](#prerequisites), then run a GPU visibility check. Startup can take several minutes. Use `nebius vpc subnet list` to find your subnet ID.
 
 ```bash
+export SUBNET_ID="your-subnet-id"
+export JOB_NAME="first-job-$(date +%Y%m%d-%H%M%S)"
+
 nebius ai job create \
-  --name my-first-job \
+  --name "$JOB_NAME" \
   --image nvidia/cuda:13.1.1-runtime-ubuntu24.04 \
   --container-command bash \
   --args "-c nvidia-smi" \
   --platform gpu-l40s-a \
   --preset 1gpu-8vcpu-32gb \
-  --timeout 15m
+  --timeout 1h \
+  --subnet-id "$SUBNET_ID"
 
 # Get the job ID and stream logs
-export JOB_ID=$(nebius ai job get-by-name --name my-first-job \
+export JOB_ID=$(nebius ai job get-by-name --name "$JOB_NAME" \
   --format jsonpath='{.metadata.id}')
-nebius ai logs "$JOB_ID"
+nebius ai job get "$JOB_ID"
+nebius ai job logs "$JOB_ID" --follow
 ```
+
+Success means the Job completes successfully and its logs contain the NVIDIA GPU table. Compute is released after completion.
 
 → Full walkthrough: [first-job.md](./quickstarts/first-job.md)
 
@@ -36,7 +43,7 @@ nebius ai logs "$JOB_ID"
 
 ## Example catalog
 
-Pick the section that matches your goal — each links to runnable examples:
+Pick the section that matches your goal. See [validation notes](docs/validation.md) for checks performed on the simplified examples.
 
 - 🚀 [**Quickstarts**](#-quickstarts) — lowest-friction first runs.
 - 📦 [**Templates**](#-templates) — 1-click Console deploy (pre-filled create forms).

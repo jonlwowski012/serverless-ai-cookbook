@@ -60,7 +60,7 @@ nebius ai endpoint create \
   --disk-size "$DISK" \
   --subnet-id "$SUBNET_ID" \
   --env NGC_API_KEY="$NGC_API_KEY" \
-  --public --auth token --token "$AUTH_TOKEN"
+  --auth token --token "$AUTH_TOKEN"
 
 cat <<EOF
 
@@ -69,9 +69,9 @@ cat <<EOF
 Wait for readiness, then call it:
 
   ID=\$(nebius ai endpoint get-by-name --parent-id "${PROJECT_ID}" --name "${NIM_NAME}" --format jsonpath='{.metadata.id}')
-  IP=\$(nebius ai endpoint get "\$ID" --format json | jq -r '.status.public_endpoints[0]')
+  URL=\$(nebius ai endpoint get "\$ID" --format json | jq -r '.status.public_endpoints[] | select(startswith("https://"))' | head -1)
   # poll until {"status":"ready"}:
-  curl -s "http://\$IP/v1/health/ready" -H "Authorization: Bearer ${AUTH_TOKEN}"
+  curl -s "\$URL/v1/health/ready" -H "Authorization: Bearer ${AUTH_TOKEN}"
 
 Cleanup:  nebius ai endpoint delete "\$ID"
 EOF

@@ -15,244 +15,118 @@ keywords:
 difficulty: intermediate
 ---
 
-# Train and Serve TinyLlama with Nebius Serverless
+# Fine-tune TinyLlama, then serve the adapter
 
-This example shows an end-to-end Serverless workflow for ML engineers who want to fine-tune a model, persist the adapter in Object Storage, and serve it behind an API without managing cluster infrastructure first.
+Use a GPU Job to fine-tune TinyLlama on 32 instruction examples, save the LoRA adapter to Object Storage, and load it in a vLLM Endpoint. The bucket is the handoff between the two resources. This small run demonstrates the workflow; it does not establish model quality.
 
-It uses:
+## Before you start
 
-- a Serverless AI Job for fine-tuning
-- Object Storage as the handoff point between training and serving
-- a Serverless AI Endpoint running `vLLM` with a LoRA adapter
+Complete the [CLI prerequisites](../../README.md#prerequisites). You need `jq`, the AWS CLI configured with [Object Storage credentials](https://docs.nebius.com/object-storage/interfaces/aws-cli), and quota for one L40S GPU VM. Run commands from `training/train-and-serve`.
 
-## What this example does
+### 1. Set your inputs and create a bucket
 
-- fine-tunes `TinyLlama/TinyLlama-1.1B-Chat-v1.0` with LoRA in a Serverless AI Job
-- stores the adapter output in Nebius Object Storage
-- serves the base model plus adapter through a Serverless AI Endpoint
-
-## Why this is useful
-
-This is a practical pattern for short, iterative ML work:
-
-- you can start from public runtime images
-- keep training and serving code outside the image
-- update `fine_tune.py`, `start.sh`, or `serve.sh` without rebuilding a container
-- move from training to inference with the same bucket-mounted artifacts
-
-For production, Git is usually the better source of truth for scripts and configs. The core pattern still holds: keep your code separate from the base runtime image unless you have a reason to freeze them together.
-
-## Files in this folder
-
-```text
-training/train-and-serve/
-├── README.md
-├── fine_tune.py
-├── start.sh
-└── serve.sh
-```
-
-## Requirements
-
-- Nebius CLI installed and authenticated
-- `jq`
-- an S3-compatible client such as the AWS CLI
-- an Object Storage access key and secret
-- quota for:
-  - one Serverless AI Job
-  - one Serverless AI Endpoint
-  - Object Storage
-
-If you need Object Storage credentials, see:
-
-- [Working with Object Storage buckets and objects using the AWS CLI](https://docs.nebius.com/object-storage/interfaces/aws-cli)
-- [Create your first bucket](https://docs.nebius.com/object-storage/quickstart)
-
-## Runtime / compute
-
-- training image: `pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel`
-- serving image: `vllm/vllm-openai:v0.7.3`
-- example platform: `gpu-h200-sxm`
-- example preset: `1gpu-16vcpu-200gb`
-
-## Quickstart
-
-### 1. Set variables and create the bucket
+Use your configured CLI project. Pick its subnet with `nebius vpc subnet list`, and set the storage region to match your project.
 
 ```bash
-export PARENT_ID=project-u00nkqg6pr00v6bhssycnr
-export NB_REGION_ID=us-central1
-export AWS_ACCESS_KEY_ID=<your-object-storage-access-key>
-export AWS_SECRET_ACCESS_KEY=<your-object-storage-secret>
-export BUCKET_NAME=<globally-unique-bucket-name>
+export SUBNET_ID="your-subnet-id"
+export REGION="eu-north1"
+export BUCKET_NAME="your-unique-demo-bucket"
+export RUN_NAME="tinyllama-$(date +%Y%m%d-%H%M%S)"
+export STORAGE_URL="https://storage.$REGION.nebius.cloud"
 
-export SUBNET_ID=$(
-  nebius vpc subnet list \
-    --parent-id "$PARENT_ID" \
-    --format json \
-  | jq -r '.items[0].metadata.id'
-)
+nebius storage bucket create --name "$BUCKET_NAME"
+export BUCKET_ID=$(nebius storage bucket get-by-name --name "$BUCKET_NAME" \
+  --format jsonpath='{.metadata.id}')
 
-export BUCKET_ID=$(
-  nebius storage bucket create \
-    --name "$BUCKET_NAME" \
-    --parent-id "$PARENT_ID" \
-    --format json \
-  | jq -r '.metadata.id'
-)
+for file in fine_tune.py start.sh serve.sh; do
+  aws --endpoint-url "$STORAGE_URL" s3 cp "$file" "s3://$BUCKET_NAME/$file"
+done
 ```
 
-### 2. Upload the example files to Object Storage
-
-```bash
-chmod +x start.sh serve.sh
-
-aws \
-  --endpoint-url "https://storage.$NB_REGION_ID.nebius.cloud" \
-  s3 cp fine_tune.py "s3://$BUCKET_NAME/fine_tune.py"
-
-aws \
-  --endpoint-url "https://storage.$NB_REGION_ID.nebius.cloud" \
-  s3 cp start.sh "s3://$BUCKET_NAME/start.sh"
-
-aws \
-  --endpoint-url "https://storage.$NB_REGION_ID.nebius.cloud" \
-  s3 cp serve.sh "s3://$BUCKET_NAME/serve.sh"
-```
-
-### 3. Create the fine-tuning job
+### 2. Train in a Job
 
 ```bash
 nebius ai job create \
-  --name "tinyllama-ft-$(date +%Y%m%d-%H%M%S)" \
-  --parent-id "$PARENT_ID" \
-  --subnet-id "$SUBNET_ID" \
+  --name "$RUN_NAME" \
   --image pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel \
-  --container-command bash \
-  --args "/mnt/data/start.sh" \
-  --volume "${BUCKET_ID}:/mnt/data:rw" \
-  --platform gpu-h200-sxm \
-  --preset 1gpu-16vcpu-200gb \
-  --disk-size 200Gi
+  --container-command bash --args "/mnt/data/start.sh" \
+  --env "RUN_NAME=$RUN_NAME" --volume "$BUCKET_ID:/mnt/data:rw" \
+  --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb \
+  --subnet-id "$SUBNET_ID" --disk-size 100Gi --timeout 1h
+
+export JOB_ID=$(nebius ai job get-by-name --name "$RUN_NAME" \
+  --format jsonpath='{.metadata.id}')
+nebius ai job logs "$JOB_ID" --follow
+nebius ai job get "$JOB_ID"
 ```
 
-This job mounts the bucket at `/mnt/data`, installs dependencies at startup, runs `fine_tune.py`, and saves the adapter output back to the bucket under `output/tinyllama-lora`.
+`start.sh` installs pinned dependencies in the public PyTorch image, then runs the trainer on one GPU. Model serialization uses local scratch space; the script copies finished files to the read/write bucket mount at `/mnt/data`. Each fresh `RUN_NAME` gets its own output directory.
 
-### 4. Watch the job
+Wait for the Job to reach `COMPLETED`. Logs end with `TRAINING COMPLETE`. Check the saved adapter before serving it:
 
 ```bash
-nebius ai job list --parent-id "$PARENT_ID"
-nebius ai job get <job-id>
-nebius ai logs <job-id>
+aws --endpoint-url "$STORAGE_URL" s3 ls \
+  "s3://$BUCKET_NAME/output/$RUN_NAME/tinyllama-lora/"
 ```
 
-### 5. Verify the adapter output
+The output includes `adapter_config.json`, `adapter_model.safetensors`, tokenizer files, and `eval_results.json`. A `COMPLETE` marker is written after copying all files; serving checks it before loading. These are adapter weights; serving also needs the TinyLlama base model.
 
-After the job completes, the bucket should contain:
-
-```text
-output/tinyllama-lora/
-├── README.md
-├── adapter_config.json
-├── adapter_model.safetensors
-├── special_tokens_map.json
-├── tokenizer.json
-├── tokenizer.model
-├── tokenizer_config.json
-└── training_args.bin
-```
-
-This is a LoRA adapter package, not a fully merged copy of the base model.
-
-### 6. Delete the completed job if you need quota back
-
-If you are tight on GPU quota, remove the job before creating the endpoint:
+### 3. Load the adapter in an Endpoint
 
 ```bash
-nebius ai job delete <job-id>
-```
+export ENDPOINT_NAME="$RUN_NAME-serve"
+export AUTH_TOKEN=$(openssl rand -hex 32)
 
-### 7. Create the `vLLM` endpoint
-
-```bash
 nebius ai endpoint create \
-  --name "tinyllama-vllm-$(date +%Y%m%d-%H%M%S)" \
-  --parent-id "$PARENT_ID" \
-  --subnet-id "$SUBNET_ID" \
-  --image vllm/vllm-openai:v0.7.3 \
-  --auth none \
-  --container-port 8000 \
-  --container-command bash \
-  --args "/mnt/data/serve.sh" \
-  --volume "${BUCKET_ID}:/mnt/data:ro" \
-  --platform gpu-h200-sxm \
-  --preset 1gpu-16vcpu-200gb \
-  --public
+  --name "$ENDPOINT_NAME" --image vllm/vllm-openai:v0.7.3 \
+  --container-command bash --args "/mnt/data/serve.sh" \
+  --env "RUN_NAME=$RUN_NAME" --volume "$BUCKET_ID:/mnt/data:ro" \
+  --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb \
+  --subnet-id "$SUBNET_ID" --container-port 8000 --disk-size 100Gi \
+  --auth token --token "$AUTH_TOKEN"
+
+export ENDPOINT_ID=$(nebius ai endpoint get-by-name --name "$ENDPOINT_NAME" \
+  --format jsonpath='{.metadata.id}')
+nebius ai endpoint get "$ENDPOINT_ID"
+nebius ai endpoint logs "$ENDPOINT_ID" --follow
 ```
 
-The endpoint downloads the TinyLlama base model from Hugging Face and loads the LoRA adapter from the mounted bucket path.
+Wait for the model to finish loading, then press Ctrl-C to leave the logs. Serving mounts the same bucket read-only and exposes port 8000 through managed HTTPS.
 
-### 8. Wait for the endpoint
-
-```bash
-nebius ai endpoint list --parent-id "$PARENT_ID"
-nebius ai endpoint get <endpoint-id>
-```
-
-Get the public endpoint URL:
+### 4. Verify inference with the trained adapter
 
 ```bash
-export ENDPOINT_URL=$(
-  nebius ai endpoint get <endpoint-id> --format json \
-  | jq -r '.status.public_endpoints[0]'
-)
-```
+export ENDPOINT_URL=$(nebius ai endpoint get "$ENDPOINT_ID" --format json \
+  | jq -r '.status.public_endpoints[] | select(startswith("https://"))' | head -1)
 
-### 9. Test the endpoint
+curl --fail-with-body "$ENDPOINT_URL/v1/models" \
+  -H "Authorization: Bearer $AUTH_TOKEN"
 
-Health check:
-
-```bash
-curl "$ENDPOINT_URL/health"
-```
-
-Completion request:
-
-```bash
-curl -X POST "$ENDPOINT_URL/v1/completions" \
+curl --fail-with-body "$ENDPOINT_URL/v1/completions" \
+  -H "Authorization: Bearer $AUTH_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    "prompt": "Explain Nebius object storage in one short paragraph.",
-    "max_tokens": 128,
-    "temperature": 0.7
-  }'
+  -d '{"model":"tinyllama_adapter","prompt":"### Instruction:\nExplain object storage in one sentence.\n\n### Response:\n","max_tokens":64}' \
+  | jq -r '.choices[0].text'
 ```
 
-## Expected output
+`/v1/models` should list `tinyllama_adapter`, and the completion request should return text. The adapter name selects the trained weights rather than the base model alone.
 
-- the job reaches `COMPLETED`
-- the bucket contains `output/tinyllama-lora/...`
-- the endpoint reaches `READY`
-- `/health` returns `200`
-- `/v1/completions` returns valid JSON
+## Adapt and finish
 
-## Notes
+Edit `start.sh` to pass `--max-samples` or `--num-epochs` for a longer run. Use a new `RUN_NAME` each time. Changing the base model requires updating both the training input and `serve.sh`; the adapter must match its base model.
 
-- This example uses a public base model, so `HF_TOKEN` is optional.
-- `start.sh` installs Python dependencies at runtime. That keeps the example simple, but it is slower than baking them into a custom image.
-- `build-essential` is installed in the training container because some dependency paths can trigger native compilation during startup.
-
-## Cleanup
-
-Delete the endpoint when you are done:
+Delete the Endpoint to stop billing. Remove the demo bucket only after downloading any outputs you want to keep:
 
 ```bash
-nebius ai endpoint delete <endpoint-id>
-```
-
-Delete the bucket if you no longer need it:
-
-```bash
+nebius ai endpoint delete "$ENDPOINT_ID"
+nebius ai job delete "$JOB_ID"
+aws --endpoint-url "$STORAGE_URL" s3 sync "s3://$BUCKET_NAME/output/$RUN_NAME/" "./output/$RUN_NAME/"
+aws --endpoint-url "$STORAGE_URL" s3 rm "s3://$BUCKET_NAME/" --recursive
 nebius storage bucket delete "$BUCKET_ID"
 ```
+
+If training fails, read Job logs. If vLLM cannot load the adapter, check that training completed and `RUN_NAME` matches the saved directory. See the [Job guide](https://docs.nebius.com/serverless/jobs/manage) and [Endpoint guide](https://docs.nebius.com/serverless/endpoints/manage) for resource settings.
+
+## Validation
+
+Checked on Nebius: the 32-example training Job, durable adapter readback, and authenticated inference using `tinyllama_adapter`. Host-side AWS CLI uploads were not checked. See [validation notes](../../docs/validation.md).

@@ -1,12 +1,29 @@
 # Contributing to Serverless Cookbook
 
-This repository accepts runnable, workload-first examples.
+This repository helps Serverless customers complete common tasks with small,
+easy-to-follow examples. Each example should teach one runnable path from inputs
+to a checked result. Production features belong here when they are the task the
+example teaches.
+
+## Keep the code simple
+
+- Use one pinned runtime and its supported API; avoid runtime version detection.
+- Expose the few inputs a customer needs to change. Define defaults once.
+- Show clear stages: load inputs, run the workload, save or serve the result.
+- Prefer standard library CLI parsing and plain progress messages to extra wrappers.
+- Use a workload's Python API or supported CLI directly. Keep necessary launchers.
+- Choose one output route for the first run: a mounted bucket or an explicit upload.
+- Let unexpected failures raise. A required upload failure must fail the Job.
+- Preserve useful input checks, authentication, TLS, and complete-checkpoint checks.
+- Keep optional plots, benchmarks, tracking, and tuning below the first run or in
+  a linked guide. Do not bundle run-result directories just to show validation.
+- Keep each example self-contained; avoid a shared orchestration framework.
 
 ## What to contribute
 
 - Runnable, workload-first examples with clear input/output behavior.
 - Open contribution scope for categories:
-  `quickstarts/`, `training/`, `inference/`, `agents/`, `robotics/`, `life-sciences/`, `mlops/`.
+  `quickstarts/`, `training/`, `inference/`, `agents/`, `robotics/`, `life-science/`, `mlops/`.
 
 ### `quickstarts/`
 
@@ -58,7 +75,7 @@ Expected scope:
 - synthetic dataset generation
 - robotics-oriented GPU/CPU pipelines
 
-### `life-sciences/`
+### `life-science/`
 
 Use for health, biology, and life-science workloads that are recognizable and runnable.
 
@@ -105,6 +122,9 @@ Minimum required files:
 
 Store lightweight metadata in YAML front matter at the top of each example `README.md`.
 
+Console templates under `templates/` may use their existing `config.json` and
+Deploy URL as metadata instead. Catalog READMEs do not need example front matter.
+
 Recommended fields:
 
 - `title`
@@ -122,14 +142,20 @@ Recommended fields:
 
 Keep README files concise and practical. Include:
 
-1. What this example does
-  - Why this is useful
-  - Requirements
-  - Runtime / compute
-2. Run
-3. Expected output
-4. How to adapt
-5. Troubleshooting
+1. Goal and expected result; explain why a Job or Endpoint fits.
+2. Before you start: required tools, access, compute, and inputs.
+3. Run: one copyable sequence with a short explanation of Serverless arguments.
+4. Verify: resource status plus a concrete log, response, or durable artifact.
+5. Adapt and finish: useful inputs to change, cleanup, and short troubleshooting.
+
+State how the current version was checked. Local syntax checks, image builds,
+CLI dry runs, and live workload checks are different evidence. For an Endpoint,
+show deletion to stop billing. For a Job that produces files, show where the files
+survive completion. Never commit tenant IDs or secrets; public image references
+may include their registry namespace.
+
+Run `python3 scripts/check_examples.py` for lightweight file/link/syntax checks.
+Then use the example's smallest meaningful workload to verify changed behavior.
 
 ## Naming rules
 

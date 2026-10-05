@@ -81,6 +81,13 @@ def download_models(work: Path) -> tuple[Path, Path]:
 
 def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) -> list[dict]:
     output = work / "trainer"
+    if steps < 500:
+        checkpoint_frequency = steps
+    elif steps == 10_000:
+        checkpoint_frequency = 500
+    else:
+        checkpoint_frequency = 5000
+    evaluation_steps = steps if steps >= 10_000 else 0
     command = [
         sys.executable, "-m", "lerobot.scripts.lerobot_train",
         "--config_path=/opt/lerobot/examples/flux3/lora.json",
@@ -94,8 +101,8 @@ def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) ->
         "--dataset.video_backend=pyav",
         '--rename_map={"observation.images.front":"observation.images.scene"}',
         f"--steps={steps}",
-        f"--save_freq={steps if steps < 500 else 500 if steps == 10_000 else 5000}",
-        f"--eval_steps={steps if steps >= 10_000 else 0}",
+        f"--save_freq={checkpoint_frequency}",
+        f"--eval_steps={evaluation_steps}",
         f"--output_dir={output}",
         *wandb_options(os.environ["RUN_NAME"]),
     ]
@@ -104,6 +111,8 @@ def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) ->
     errors = []
 
     def watch() -> None:
+        # Publish only complete checkpoints while training, so an interruption
+        # does not discard all progress on the Job's ephemeral disk.
         while not stop.wait(30):
             try:
                 publish(output, result, CALIBRATION_ID)

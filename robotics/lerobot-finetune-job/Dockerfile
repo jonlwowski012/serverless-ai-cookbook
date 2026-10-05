@@ -5,22 +5,7 @@ FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ── System packages ──────────────────────────────────────────────────────────
-# Ordered by origin in the LeRobot installation docs:
-#
-# Troubleshooting section — required when building C extensions (evdev, PyAV):
-#   cmake build-essential python3-dev pkg-config libavformat-dev libavcodec-dev
-#   libavdevice-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
-#
-# Step 2 (ffmpeg) — system-wide ffmpeg for TorchCodec ≥ 0.10 / PyTorch ≥ 2.10:
-#   ffmpeg
-#
-# Step 2 (evdev on Linux) — gym-pusht pulls evdev as a transitive dependency;
-#   libevdev-dev provides the Linux kernel headers evdev compiles against:
-#   libevdev-dev
-#
-# Extra — headless rendering needed when gym environments render frames:
-#   libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev
+# Build dependencies, video decoding, and headless rendering for LeRobot.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     build-essential \
@@ -42,16 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender-dev \
     curl \
-    unzip \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# ── AWS CLI v2 ────────────────────────────────────────────────────────────────
-# Used for S3 result verification; boto3 handles the actual upload.
-RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
-    unzip /tmp/awscliv2.zip -d /tmp && \
-    /tmp/aws/install && \
-    rm -rf /tmp/awscliv2.zip /tmp/aws
 
 # ── uv ───────────────────────────────────────────────────────────────────────
 # Docs: recommended package manager for the non-conda path.

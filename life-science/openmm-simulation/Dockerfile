@@ -6,14 +6,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     build-essential \
-    unzip \
     && rm -rf /var/lib/apt/lists/*
-
-# Install AWS CLI
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install && \
-    rm -rf awscliv2.zip aws
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -35,7 +28,7 @@ RUN conda install -y -c conda-forge --strict-channel-priority \
     conda clean -afy
 
 # Create an unprivileged user to run the simulation. The image itself is
-# built as root (needed for apt, conda, AWS CLI install), but the container
+# built as root (needed for apt and conda installs), but the container
 # drops to this user for all runtime work.
 RUN useradd --create-home --uid 1000 --shell /bin/bash nebius && \
     mkdir -p /openmm/results && \

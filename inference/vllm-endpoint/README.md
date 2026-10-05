@@ -16,83 +16,66 @@ difficulty: quickstart
 
 # Serve Qwen with vLLM
 
-Use this example when you want an OpenAI-compatible LLM API on GPU without managing VM lifecycle details.
+Run Qwen3-0.6B behind an authenticated chat API. This uses an Endpoint because the model must stay loaded between requests.
 
-Keywords: vLLM, LLM inference, OpenAI-compatible API, GPU serving
+## Before you start
 
-## What this example does
+Complete the [CLI prerequisites](../../README.md#prerequisites). Install `jq`; choose your project's subnet with `nebius vpc subnet list`. You need quota for one L40S GPU VM. The model is public, so a Hugging Face token is unnecessary.
 
-Deploys a vLLM endpoint that exposes an OpenAI-compatible API for chat completions.
-
-### Why this is useful
-
-It gives you a production-style serving pattern you can reuse for model APIs and app backends.
-
-### Requirements
-
-- Nebius CLI installed and authenticated
-- GPU endpoint quota and subnet available
-- `jq` for parsing CLI JSON output
-
-### Runtime / compute
-
-- model: `Qwen/Qwen3-0.6B` (default)
-- image: `vllm/vllm-openai` container
-- example presets:
-  - `gpu-l40s-a` with `1gpu-8vcpu-32gb`
-  - `gpu-h100-sxm` with `1gpu-16vcpu-200gb`
-
-## Quickstart
+## Run
 
 ```bash
+export SUBNET_ID="your-subnet-id"
 export MODEL_ID="Qwen/Qwen3-0.6B"
-export AUTH_TOKEN="$(openssl rand -hex 32)"
-export SUBNET_ID=$(nebius vpc subnet list --format jsonpath='{.items[0].metadata.id}')
+export ENDPOINT_NAME="qwen-demo-$(date +%Y%m%d-%H%M%S)"
+export AUTH_TOKEN=$(openssl rand -hex 32)
 
 nebius ai endpoint create \
-  --name vllm-qwen-chat \
-  --image vllm/vllm-openai:v0.18.0-cu130 \
+  --name "$ENDPOINT_NAME" --image vllm/vllm-openai:v0.18.0-cu130 \
   --container-command "python3 -m vllm.entrypoints.openai.api_server" \
   --args "--model $MODEL_ID --host 0.0.0.0 --port 8000" \
-  --platform gpu-l40s-a \
-  --preset 1gpu-8vcpu-32gb \
-  --public \
-  --container-port 8000 \
-  --auth token \
-  --token "$AUTH_TOKEN" \
-  --shm-size 16Gi \
-  --disk-size 450Gi \
-  --subnet-id "$SUBNET_ID"
+  --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb \
+  --subnet-id "$SUBNET_ID" --container-port 8000 \
+  --auth token --token "$AUTH_TOKEN" \
+  --shm-size 16Gi --disk-size 100Gi
 
-nebius ai endpoint list
-export ENDPOINT_ID="<endpoint-id>"
-ENDPOINT_IP=$(nebius ai endpoint get "$ENDPOINT_ID" --format json | jq -r '.status.public_endpoints[0]')
-export ENDPOINT_URL="http://$ENDPOINT_IP"
+export ENDPOINT_ID=$(nebius ai endpoint get-by-name --name "$ENDPOINT_NAME" \
+  --format jsonpath='{.metadata.id}')
+nebius ai endpoint get "$ENDPOINT_ID"
+nebius ai endpoint logs "$ENDPOINT_ID" --follow
 ```
 
-## Expected output
+Wait for model loading to finish, then press Ctrl-C to leave the log stream. The pinned image contains vLLM; the command downloads the model. Shared memory supports its worker processes. The container port is exposed through managed HTTPS.
+
+## Verify
 
 ```bash
-curl -sS "$ENDPOINT_URL/v1/models" -H "Authorization: Bearer $AUTH_TOKEN" | jq
+export ENDPOINT_URL=$(nebius ai endpoint get "$ENDPOINT_ID" --format json \
+  | jq -r '.status.public_endpoints[] | select(startswith("https://"))' | head -1)
+curl --fail-with-body "$ENDPOINT_URL/v1/models" \
+  -H "Authorization: Bearer $AUTH_TOKEN"
 
-curl -sS "$ENDPOINT_URL/v1/chat/completions" \
+curl --fail-with-body "$ENDPOINT_URL/v1/chat/completions" \
   -H "Authorization: Bearer $AUTH_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{
-    \"model\": \"$MODEL_ID\",
-    \"messages\": [{\"role\": \"user\", \"content\": \"Say hello\"}]
-  }" | jq -r '.choices[0].message.content'
+  -d "{\"model\":\"$MODEL_ID\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":128}" \
+  | jq -r '.choices[0].message.content'
 ```
 
-You should see model metadata and a valid assistant response.
+You should see the model ID followed by an assistant response. If the request fails, check the model name and Endpoint logs; startup includes downloading the weights.
 
-## How to adapt it
+## Adapt and finish
 
-- swap `MODEL_ID` for another Hugging Face model
-- tune platform/preset for latency and throughput targets
-- add your app-specific prompt format and auth integration
+Change `MODEL_ID` for another vLLM-supported model. Larger models may require a different GPU and preset. Change the prompt in the request to use your own task.
 
-## Troubleshooting
+Delete the Endpoint when finished to stop billing:
 
-- if startup is slow, check endpoint logs and model download time
-- if completions fail, verify model name matches the deployed model ID
+```bash
+nebius ai endpoint delete "$ENDPOINT_ID"
+```
+
+See [Nebius Endpoint documentation](https://docs.nebius.com/serverless/endpoints/manage) for authentication, ports, and lifecycle options.
+
+## Validation
+
+Checked on Nebius: model listing, chat completion over HTTPS, and rejection of an unauthenticated request. See [validation notes](../../docs/validation.md).

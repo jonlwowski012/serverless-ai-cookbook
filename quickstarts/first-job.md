@@ -12,72 +12,51 @@ keywords:
 difficulty: quickstart
 ---
 
-## Getting started with Serverless AI jobs: Run `nvidia-smi` within a job
+# Run your first GPU Job
 
-Use this quickstart to validate that a GPU job can start, run, and return logs in your project.
+Run `nvidia-smi` in a Job to check GPU visibility. A Job runs its command once and releases compute when it finishes. Allow several minutes for startup.
 
-Official docs example: [Getting started with Serverless AI jobs](https://docs.nebius.com/serverless/quickstart/jobs)
+## Before you start
 
-## What this example does
+Complete the [CLI prerequisites](../README.md#prerequisites). You need project editor access and quota for one L40S GPU VM. Run `nebius vpc subnet list` to choose a subnet in that project.
 
-Runs a Serverless AI job that executes `nvidia-smi` and prints GPU details from inside the container.
-
-### Why this is useful
-
-It is the fastest way to verify quota, subnet routing, image startup, and GPU visibility before running heavier workloads.
-
-### Prerequisites
-
-- Nebius CLI is installed and configured (see [Setup](../README.md#setup))
-- you are in a tenant group with admin permissions
-- VM quota is available (Administration -> Limits -> Quotas -> Compute -> Number of virtual machines)
-
-### Runtime / compute
-
-- image: `nvidia/cuda:13.1.1-runtime-ubuntu24.04`
-- platform: `gpu-l40s-a`
-- preset: `1gpu-8vcpu-32gb`
-- timeout: `15m`
-
-## Quickstart
+## Run
 
 ```bash
-nebius ai job create \
-  --name my-job \
-  --image nvidia/cuda:13.1.1-runtime-ubuntu24.04 \
-  --container-command bash \
-  --args "-c nvidia-smi" \
-  --platform gpu-l40s-a \
-  --preset 1gpu-8vcpu-32gb \
-  --timeout 15m
+export SUBNET_ID="your-subnet-id"
+export JOB_NAME="first-job-$(date +%Y%m%d-%H%M%S)"
 
-export JOB_ID=$(nebius ai job get-by-name --name my-job \
+nebius ai job create \
+  --name "$JOB_NAME" \
+  --image nvidia/cuda:13.1.1-runtime-ubuntu24.04 \
+  --container-command bash --args "-c nvidia-smi" \
+  --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb \
+  --subnet-id "$SUBNET_ID" --timeout 1h
+
+export JOB_ID=$(nebius ai job get-by-name --name "$JOB_NAME" \
   --format jsonpath='{.metadata.id}')
 nebius ai job get "$JOB_ID"
-nebius ai logs "$JOB_ID"
+nebius ai job logs "$JOB_ID" --follow
 ```
 
-Note: If your organization uses custom networking, you might need to to specify `--subnet-id`. See [Network and Subnet Selection](../DEVELOPER_GUIDE.md#network-and-subnet-selection) for details.
+The platform selects the GPU type; its matching preset selects the number of GPUs, CPUs, and memory. The timeout caps runtime; the Job stops earlier when `nvidia-smi` exits.
 
-## Expected output
+## Verify
 
-- job reaches running/succeeded status
-- logs include `nvidia-smi` output and GPU table
+After the command finishes, check `nebius ai job get "$JOB_ID"` for `COMPLETED`. Logs should contain the NVIDIA GPU table, including the GPU name and driver version. A running Job alone does not prove completion.
 
-## How to adapt
+## Adapt and finish
 
-- replace `--image` with your own container image
-- replace `--args` with your workload command
-- adjust platform/preset/timeout for your runtime
+Replace the image and command to run your own batch task. Files written to the container disk disappear when the Job finishes; mount Object Storage for durable results, as shown in [Train and Serve](../training/train-and-serve/README.md).
 
-## Troubleshooting
-
-- if job is stuck pending, verify VM quota and subnet
-- if job creation fails, confirm active profile and `parent-id` in CLI setup
-- if logs are empty, re-check image/command and inspect job status repeatedly
-
-Optional cleanup:
+Optionally delete the completed Job record:
 
 ```bash
 nebius ai job delete "$JOB_ID"
 ```
+
+If the Job cannot start, check quota and subnet availability. If it exits with an error, inspect its logs. See the [official Job quickstart](https://docs.nebius.com/serverless/quickstart/jobs) for platform details.
+
+## Validation
+
+Checked on Nebius: the L40S Job completed and logged the GPU table. See [validation notes](../docs/validation.md).

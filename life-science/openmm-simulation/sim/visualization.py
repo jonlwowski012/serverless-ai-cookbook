@@ -3,15 +3,13 @@ Visualization module for OpenMM simulation results.
 Provides comprehensive plotting capabilities for molecular dynamics data.
 """
 
-import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Dict
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import ListedColormap, BoundaryNorm
-from datetime import datetime
 
 try:
     import mdtraj as md

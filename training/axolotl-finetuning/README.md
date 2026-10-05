@@ -33,7 +33,7 @@ This gives a practical baseline for adapter fine-tuning with managed GPUs and pe
 ### Requirements
 
 - you are in a tenant group with admin permissions
-- Nebius CLI is installed and configured (see [Setup](../../README.md#setup))
+- Nebius CLI is installed and configured (see [CLI prerequisites](../../README.md#prerequisites))
 - AWS CLI is installed and configured
 
 ### Runtime / compute
