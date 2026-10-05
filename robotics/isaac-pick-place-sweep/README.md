@@ -22,7 +22,7 @@ The default sweep changes the cube's pickup X and placement Y positions. A resul
 
 ## 1. Build and push the image
 
-The committed Dockerfile starts from Isaac Sim 6.1.0, installs boto3, and runs run.py. From the repository root, set IMAGE to your full Nebius registry path, then build and push:
+The committed Dockerfile starts from Isaac Sim 6.1.0 and runs run.py. The NVIDIA image already includes boto3. From the repository root, set IMAGE to your full Nebius registry path, then build and push:
 
 ~~~bash
 cd robotics/isaac-pick-place-sweep

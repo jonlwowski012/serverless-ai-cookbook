@@ -137,18 +137,16 @@ def main():
     from isaacsim import SimulationApp
 
     app = SimulationApp({"headless": True})
-    try:
-        result = simulate(app, args.pick_x, args.place_y, args.max_steps)
-        result.update({"run_id": args.run_id, "case_id": args.case_id})
-        args.output_dir.mkdir(parents=True, exist_ok=True)
-        result_path = args.output_dir / "result.json"
-        result_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
-        print(json.dumps(result, allow_nan=False), flush=True)
-        if not args.local:
-            upload(result_path, args.run_id, args.case_id)
-    finally:
-        # Isaac's fast shutdown can exit Python, so publish before closing the app.
-        app.close()
+    result = simulate(app, args.pick_x, args.place_y, args.max_steps)
+    result.update({"run_id": args.run_id, "case_id": args.case_id})
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    result_path = args.output_dir / "result.json"
+    result_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
+    print(json.dumps(result, allow_nan=False), flush=True)
+    if not args.local:
+        upload(result_path, args.run_id, args.case_id)
+    # Isaac's fast shutdown can exit Python, so publish before closing the app.
+    app.close()
 
 
 if __name__ == "__main__":

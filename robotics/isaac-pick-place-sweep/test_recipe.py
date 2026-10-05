@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from launch import expand_sweep, job_command, job_id_from_output
-from run import evaluate, upload
+from run import evaluate, main as run_case, upload
 
 
 class RecipeTest(unittest.TestCase):
@@ -68,6 +68,26 @@ class RecipeTest(unittest.TestCase):
         self.assertEqual([name for name, _ in calls], ["result", "complete"])
         self.assertEqual(calls[0][1][2], "isaac-pick-place/run-1/case-000/result.json")
         self.assertEqual(calls[1][1]["Key"], "isaac-pick-place/run-1/case-000/COMPLETE")
+
+    def test_upload_error_keeps_job_failed(self):
+        closed = []
+        app = SimpleNamespace(close=lambda: closed.append(True))
+        env = {
+            "S3_BUCKET": "bucket", "S3_ENDPOINT_URL": "https://storage.example",
+            "AWS_DEFAULT_REGION": "eu-north1", "AWS_ACCESS_KEY_ID": "test",
+            "AWS_SECRET_ACCESS_KEY": "test",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            arguments = [
+                "run.py", "--run-id", "run-1", "--case-id", "case-000",
+                "--pick-x", "0.4", "--place-y", "0.2", "--output-dir", directory,
+            ]
+            with patch.dict(os.environ, env), patch.dict(sys.modules, {"isaacsim": SimpleNamespace(SimulationApp=lambda _: app)}):
+                with patch.object(sys, "argv", arguments), patch("run.simulate", return_value={"success": True}):
+                    with patch("run.upload", side_effect=RuntimeError("upload failed")):
+                        with self.assertRaisesRegex(RuntimeError, "upload failed"):
+                            run_case()
+        self.assertEqual(closed, [])
 
 
 if __name__ == "__main__":
