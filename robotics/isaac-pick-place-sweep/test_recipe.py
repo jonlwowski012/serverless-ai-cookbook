@@ -14,26 +14,36 @@ from run import evaluate, upload
 class RecipeTest(unittest.TestCase):
     def test_four_independent_jobs(self):
         points = expand_sweep(json.loads(Path(__file__).with_name("sweep.json").read_text()))
-        self.assertEqual(len(points), 4)
+        self.assertEqual(points, [
+            {"pick_x": 0.4, "place_y": 0.2},
+            {"pick_x": 0.4, "place_y": 0.22},
+            {"pick_x": 0.42, "place_y": 0.2},
+            {"pick_x": 0.42, "place_y": 0.22},
+        ])
         options = SimpleNamespace(
             image="example/image:tag", platform="gpu-l40s-a", preset="1gpu-8vcpu-32gb",
-            timeout="2h", bucket="bucket", endpoint="https://storage.example", region="eu-north1",
-            prefix="isaac-pick-place", access_key_secret="access", secret_key_secret="secret", subnet_id=None,
+            timeout="2h", bucket="bucket", region="eu-north1", s3_secret="storage-keys",
+            prefix="isaac-pick-place", subnet_id=None,
             profile=None,
         )
         commands = [job_command(options, "run-1", f"case-{i:03d}", point) for i, point in enumerate(points)]
         self.assertEqual(len({command[command.index("--name") + 1] for command in commands}), 4)
         self.assertTrue(all(command.count("--env-secret") == 2 for command in commands))
         self.assertTrue(all("--args" in command for command in commands))
+        self.assertTrue(all("--container-command" not in command for command in commands))
         self.assertTrue(all("--inject-file" not in command for command in commands))
         self.assertTrue(all(command[command.index("--image") + 1] == options.image for command in commands))
+        self.assertTrue(all("AWS_ACCESS_KEY_ID=storage-keys" in command for command in commands))
+        self.assertTrue(all("AWS_SECRET_ACCESS_KEY=storage-keys" in command for command in commands))
+        self.assertTrue(all("S3_ENDPOINT_URL=https://storage.eu-north1.nebius.cloud" in command for command in commands))
+        self.assertTrue(all("/opt/isaac-sweep/run.py" not in command[command.index("--args") + 1] for command in commands))
 
     def test_task_success_needs_controller_and_final_pose(self):
-        target = [0.7, -0.3, 0.02575]
+        target = [-0.4, 0.2, 0.02575]
         self.assertTrue(evaluate(True, target, target)["success"])
         self.assertFalse(evaluate(False, target, target)["success"])
-        self.assertFalse(evaluate(True, [0.9, -0.3, 0.02575], target)["success"])
-        self.assertFalse(evaluate(True, [float("nan"), -0.3, 0.02575], target)["success"])
+        self.assertFalse(evaluate(True, [-0.2, 0.2, 0.02575], target)["success"])
+        self.assertFalse(evaluate(True, [float("nan"), 0.2, 0.02575], target)["success"])
 
     def test_cli_job_id_from_human_output(self):
         output = "Job ID: aijob-abc123\nJob created successfully.\nID: aijob-abc123\n"

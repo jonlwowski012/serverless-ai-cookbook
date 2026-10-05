@@ -33,7 +33,6 @@ def expand_sweep(config):
 def job_command(options, run_id, case_id, point):
     # Nebius takes the container arguments as one CLI value.
     container_args = [
-        "/opt/isaac-sweep/run.py",
         "--run-id", run_id,
         "--case-id", case_id,
         "--pick-x", str(point["pick_x"]),
@@ -43,18 +42,17 @@ def job_command(options, run_id, case_id, point):
         "nebius", "ai", "job", "create",
         "--name", f"isaac-pick-{run_id}-{case_id}",
         "--image", options.image,
-        "--container-command", "/isaac-sim/python.sh",
         "--platform", options.platform,
         "--preset", options.preset,
-        "--disk-size", "250Gi",
         "--timeout", options.timeout,
         "--env", "ACCEPT_EULA=Y",
+        "--env", "PRIVACY_CONSENT=Y",
         "--env", f"S3_BUCKET={options.bucket}",
-        "--env", f"S3_ENDPOINT_URL={options.endpoint}",
+        "--env", f"S3_ENDPOINT_URL=https://storage.{options.region}.nebius.cloud",
         "--env", f"AWS_DEFAULT_REGION={options.region}",
         "--env", f"S3_PREFIX={options.prefix.strip('/')}",
-        "--env-secret", f"AWS_ACCESS_KEY_ID={options.access_key_secret}",
-        "--env-secret", f"AWS_SECRET_ACCESS_KEY={options.secret_key_secret}",
+        "--env-secret", f"AWS_ACCESS_KEY_ID={options.s3_secret}",
+        "--env-secret", f"AWS_SECRET_ACCESS_KEY={options.s3_secret}",
         "--args", shlex.join(container_args),
         "--format", "jsonpath={.metadata.id}",
     ]
@@ -77,10 +75,8 @@ def parse_inputs():
     parser.add_argument("--config", type=Path, default=Path(__file__).with_name("sweep.json"))
     parser.add_argument("--image", required=True, help="pushed image built from this recipe's Dockerfile")
     parser.add_argument("--bucket", required=True)
-    parser.add_argument("--endpoint", required=True, help="S3 endpoint URL")
     parser.add_argument("--region", required=True)
-    parser.add_argument("--access-key-secret", required=True, help="MysteryBox selector for AWS_ACCESS_KEY_ID")
-    parser.add_argument("--secret-key-secret", required=True, help="MysteryBox selector for AWS_SECRET_ACCESS_KEY")
+    parser.add_argument("--s3-secret", required=True, help="SecretStash selector with both S3 access keys")
     parser.add_argument("--prefix", default="isaac-pick-place")
     parser.add_argument("--platform", default="gpu-l40s-a")
     parser.add_argument("--preset", default="1gpu-8vcpu-32gb")

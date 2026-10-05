@@ -10,107 +10,125 @@ difficulty: intermediate
 
 # Isaac Sim pick-and-place sweep
 
-Run a headless [Franka Panda pick-and-place task](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/core_api_tutorials/tutorial_core_multiple_tasks.html) in an Isaac Sim Docker image. `launch.py` reads [`sweep.json`](./sweep.json) and submits **one Nebius AI Job per combination** of cube pickup X and placement Y. Jobs run independently and can execute at the same time. Each job records controller completion, the cube's measured final pose, placement error, and a success flag in its own S3 prefix.
+Run a Franka Panda pick-and-place task in Isaac Sim. Start with one Nebius AI Job, then use launch.py to submit one independent job for each combination in sweep.json. Every job uploads its measured result to Object Storage.
 
-The sample grid has four cases. Success means the controller finished and the cube ended within 8 cm in XY and Z of its target. A completed job can contain `"success": false`: that is a valid simulation result.
+The default sweep changes the cube's pickup X and placement Y positions. A result can report robot-task failure even when its job completes: the job ran successfully, but the cube did not land near its target.
 
 ## Requirements
 
-- An authenticated Nebius CLI, Docker, a Nebius Container Registry you can push to, and a project with an RTX-capable GPU platform (the example uses `gpu-l40s-a`).
-- A Nebius Object Storage bucket, its regional S3 endpoint, and access keys stored in MysteryBox. `nebius ai job create --env-secret` reads the keys into the container; the launcher never places their values in job arguments.
-- A Linux NVIDIA Docker host if you want the optional local GPU check. Docker Desktop on macOS cannot run this Isaac Sim GPU container.
+- Authenticated [Nebius CLI](https://docs.nebius.com/cli/), Docker, AWS CLI, and a [Container Registry](https://docs.nebius.com/container-registry/quickstart) in the same project as the jobs.
+- An [Object Storage bucket](https://docs.nebius.com/object-storage/quickstart) and one [SecretStash secret](https://docs.nebius.com/serverless/jobs/manage) with payload keys named AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. The access keys need permission to write to the bucket.
+- An RTX-capable Serverless AI platform. This example uses gpu-l40s-a with preset 1gpu-8vcpu-32gb. Check its driver against [Isaac Sim 6.1 requirements](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/installation/requirements.html) before running. H100 and A100 lack the RT cores Isaac Sim requires. The container also needs outbound access to NVIDIA's hosted assets.
 
-This recipe pins `nvcr.io/nvidia/isaac-sim:5.1.0`. NVIDIA lists Linux driver `580.65.06` as its tested version and says GPUs without RT cores, including H100 and A100, are unsupported. Check the driver and platform available in your Nebius region before the first job. Isaac Sim also needs network access to its hosted assets. [NVIDIA requirements](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/requirements.html), [container guide](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/install_container.html).
+## 1. Build and push the image
 
-## 1. Build and push the container
+The committed Dockerfile starts from Isaac Sim 6.1.0, installs boto3, and runs run.py. From the repository root, set IMAGE to your full Nebius registry path, then build and push:
 
-The [Dockerfile](./Dockerfile) starts from `nvcr.io/nvidia/isaac-sim:5.1.0` and copies in [`run.py`](./run.py). The base image already includes `boto3`. From this directory, set `IMAGE` to a full image URI in your Nebius registry, then build and push it:
-
-```bash
-export IMAGE='cr.eu-north1.nebius.cloud/<registry-namespace>/isaac-pick-place-sweep:v1'
+~~~bash
+cd robotics/isaac-pick-place-sweep
+export IMAGE='cr.eu-north1.nebius.cloud/<registry-path>/isaac-pick-place-sweep:v1'
 nebius registry configure-helper
 docker build --platform linux/amd64 -t "$IMAGE" .
 docker push "$IMAGE"
-```
+~~~
 
-Edit the Dockerfile to add packages or assets, or edit `run.py` to change the task. Build and push a new tag after either change, then pass that tag to the launcher. The `.dockerignore` sends only the Dockerfile and runner to the build.
+Use the [registry quickstart](https://docs.nebius.com/container-registry/quickstart) to find your registry path. Change the Dockerfile to add packages or assets, or change run.py to edit the task. Push a new image tag after either change.
 
-You must accept NVIDIA's EULA to run it; the job launcher passes `ACCEPT_EULA=Y`.
+## 2. Set the bucket and secret
 
-## 2. Set the bucket and secret selectors
+Use your bucket's region and the selector for the single secret containing both S3 payload keys:
 
-Create a bucket and access keys using the [Nebius Object Storage quickstart](https://docs.nebius.com/object-storage/quickstart). Store them in MysteryBox as payload entries named `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, then set their selectors below. The two entries may share one secret. A selector can be a secret name or ID, as described by `nebius ai job create --help`.
-
-```bash
+~~~bash
 export S3_BUCKET='<bucket-name>'
-export S3_ENDPOINT_URL='https://storage.eu-north1.nebius.cloud'
-export AWS_DEFAULT_REGION='eu-north1'
-export ACCESS_KEY_SECRET='<access-key-secret-selector>'
-export SECRET_KEY_SECRET='<secret-key-secret-selector>'
+export REGION='eu-north1'
+export S3_SECRET='<secret-selector>'
+export S3_ENDPOINT_URL="https://storage.$REGION.nebius.cloud"
 
-aws configure --profile isaac-sweep   # enter the same S3 access keys and region
+aws configure --profile isaac-sweep
 export AWS_PROFILE=isaac-sweep
 aws s3 ls "s3://$S3_BUCKET" --endpoint-url "$S3_ENDPOINT_URL"
-```
+~~~
 
-If you already have an AWS CLI profile for this bucket, use it instead. Do not put key values in `sweep.json` or shell command arguments.
+Enter the bucket access keys when aws configure prompts you, or use an existing AWS CLI profile with access to the bucket. The commands below pass the secret selector to Nebius; they never put key values in job arguments.
 
-## 3. Inspect and launch the sweep
+## 3. Run one pick-and-place job
 
-Edit [`sweep.json`](./sweep.json) to change the grid. Its two nonempty arrays form a Cartesian product; the default values create four jobs near NVIDIA's example scene. First inspect the exact requests locally:
+This first case uses the positions in [NVIDIA's 6.1 example](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/core_api_tutorials/tutorial_core_adding_manipulator.html). The image's entrypoint runs run.py, so the job only supplies its arguments. If your project has multiple subnets, add --subnet-id with your subnet ID to this command and the sweep command below.
 
-```bash
-python3 launch.py \
+~~~bash
+export RUN_ID="single-$(date -u +%Y%m%dT%H%M%SZ)-$RANDOM"
+export CASE_ID='case-000'
+JOB_ID=$(nebius ai job create \
+  --name "isaac-pick-$RUN_ID" \
   --image "$IMAGE" \
-  --bucket "$S3_BUCKET" \
-  --endpoint "$S3_ENDPOINT_URL" \
-  --region "$AWS_DEFAULT_REGION" \
-  --access-key-secret "$ACCESS_KEY_SECRET" \
-  --secret-key-secret "$SECRET_KEY_SECRET" \
-  --dry-run
-```
+  --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb --timeout 2h \
+  --env ACCEPT_EULA=Y --env PRIVACY_CONSENT=Y \
+  --env "S3_BUCKET=$S3_BUCKET" \
+  --env "S3_ENDPOINT_URL=$S3_ENDPOINT_URL" \
+  --env "AWS_DEFAULT_REGION=$REGION" \
+  --env S3_PREFIX=isaac-pick-place \
+  --env-secret "AWS_ACCESS_KEY_ID=$S3_SECRET" \
+  --env-secret "AWS_SECRET_ACCESS_KEY=$S3_SECRET" \
+  --args "--run-id $RUN_ID --case-id $CASE_ID --pick-x 0.4 --place-y 0.2" \
+  --format 'jsonpath={.metadata.id}')
+echo "$JOB_ID"
+~~~
 
-Remove `--dry-run` to submit the jobs. If your project uses another RTX platform, preset, subnet, or CLI profile, add `--platform`, `--preset`, `--subnet-id`, or `--profile` to the command. The launcher prints each job ID and writes `runs/<run-id>/jobs.jsonl` as it submits; if a later submission fails, the earlier IDs remain recorded. Each invocation creates a new run ID and S3 prefix.
+To use another RTX platform or Nebius CLI profile, change the platform and preset or add --profile.
 
-## 4. Check jobs and results
+Check the job, then inspect the published result:
 
-For a job ID printed by the launcher:
-
-```bash
-nebius ai job get '<job-id>' --format json
-nebius ai job logs '<job-id>' --follow
-aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/<run-id>/<case-id>/" \
+~~~bash
+nebius ai job logs "$JOB_ID" --follow
+nebius ai job get "$JOB_ID" --format json
+aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/$CASE_ID/" \
   --endpoint-url "$S3_ENDPOINT_URL"
-aws s3 cp "s3://$S3_BUCKET/isaac-pick-place/<run-id>/<case-id>/result.json" ./result.json \
+aws s3 cp "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/$CASE_ID/result.json" ./result.json \
   --endpoint-url "$S3_ENDPOINT_URL"
-```
+python3 -m json.tool result.json
+~~~
 
-Each case publishes `result.json`, then an empty `COMPLETE` object. `COMPLETE` means the result upload finished. Check the `success` field for robot task success. The result also contains `pick_position_m`, `target_position_m`, `final_cube_position_m`, `controller_done`, `steps`, `xy_error_m`, and `z_error_m`.
+The case prefix should contain result.json and an empty COMPLETE object. COMPLETE is written after the result upload. In result.json, controller_done tells you whether the robot controller finished; final_cube_position_m and the XY/Z errors report where the cube ended. The success field is true only when the controller finished and the cube landed within 8 cm of its target. A Nebius job state of COMPLETED does not by itself mean the robot succeeded.
 
-In a Nebius L40S run on 2026-10-02 using the same `run.py` with the official base image, all four jobs reached `COMPLETED` and each S3 prefix contained both objects. The two `pick_x=0.15` cases placed the cube within 6 mm of the target; the two `pick_x=0.1` cases missed the grasp and reported `success: false`. The sweep therefore records robot-task outcomes separately from job and upload completion.
+## 4. Run the four-job sweep
 
-A second run built and pushed this Dockerfile, then submitted two jobs through `launch.py`. Both reached `COMPLETED`, published `result.json` and `COMPLETE`, and reported successful placements with 5.2 mm and 5.9 mm XY error.
+Edit sweep.json to change the pickup X or placement Y values. The two arrays form a grid: two values on each axis create four separate jobs. Inspect the requests, then submit:
+
+~~~bash
+python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
+  --region "$REGION" --s3-secret "$S3_SECRET" --dry-run
+python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
+  --region "$REGION" --s3-secret "$S3_SECRET"
+~~~
+
+The launcher prints each job ID and S3 path. It also writes runs/<run-id>/jobs.jsonl as jobs are submitted, so earlier IDs remain available if a later submission fails. Use a job ID to check logs and status as above. To list every result after the jobs finish:
+
+~~~bash
+export RUN_ID='<run-id-from-launch-output>'
+aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/" --recursive \
+  --endpoint-url "$S3_ENDPOINT_URL"
+~~~
+
+Each case should have result.json and COMPLETE. Compare the success and error fields across cases; the sweep is a small example, not a robot benchmark.
 
 ## Optional local GPU check
 
-On a Linux Docker host with a compatible RTX GPU, run one case without S3:
+On a Linux host with a compatible RTX GPU, run one case without S3:
 
-```bash
+~~~bash
 docker run --name isaac-pick-local --gpus all --shm-size 16g \
-  -e ACCEPT_EULA=Y \
+  -e ACCEPT_EULA=Y -e PRIVACY_CONSENT=Y \
   "$IMAGE" --run-id local --case-id case-000 \
-  --pick-x 0.1 --place-y -0.25 --local
+  --pick-x 0.4 --place-y 0.2 --local
 docker cp isaac-pick-local:/tmp/isaac-results/result.json ./result.json
 docker rm isaac-pick-local
-```
+~~~
 
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| Container fails before the task starts | Driver compatibility, RTX GPU, memory, EULA acceptance, and asset network access. |
-| Image cannot be pulled by a Job | Confirm the pushed tag exists and the job can read your registry. |
-| Job fails after simulation | S3 endpoint, bucket permissions, and MysteryBox secret selectors; no `COMPLETE` object should appear. |
-| Job completes with `"success": false` | Inspect `controller_done`, final pose, and errors. This is a robot-task outcome, not a storage failure. |
-
-The recipe is a small parameter sweep, not a robot benchmark. Use fixed versions, seeds, and repeated trials before comparing controller quality.
+| Container fails before simulation | RTX GPU, NVIDIA driver, EULA and privacy consent, and access to hosted assets. |
+| Image cannot be pulled | Confirm the image tag exists in the same project's registry. |
+| Job fails after simulation | Bucket write permission and the two SecretStash payload key names. COMPLETE should be absent after a failed upload. |
+| Job completes with success false | Check controller_done, the final cube position, and XY/Z errors. |
