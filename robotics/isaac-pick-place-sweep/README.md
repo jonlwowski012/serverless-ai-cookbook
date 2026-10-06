@@ -107,7 +107,7 @@ python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
   --region "$REGION" --s3-secret "$S3_SECRET"
 ~~~
 
-The launcher submits without waiting for each simulation, prints each job ID and S3 path, and writes runs/<run-id>/jobs.jsonl. Earlier IDs remain available if a later submission fails. Use a job ID to check logs and status as above. To list every result after the jobs finish:
+The launcher submits without waiting for each simulation, prints each job ID and S3 path, and writes `runs/<run-id>/jobs.jsonl`. Earlier IDs remain available if a later submission fails. Use a job ID to check logs and status as above. To list every result after the jobs finish:
 
 ~~~bash
 export RUN_ID='<run-id-from-launch-output>'
