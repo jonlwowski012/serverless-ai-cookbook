@@ -86,7 +86,15 @@ aws s3 cp "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/$CASE_ID/result.json" ./resu
 python3 -m json.tool result.json
 ~~~
 
+In the Nebius console, open **Serverless AI → Jobs** and search for your job name or ID. Its **Overview** shows the image, arguments, and terminal state:
+
+![Completed single pick-and-place job in the Nebius console](images/single-job.jpg)
+
 The case prefix should contain result.json and an empty COMPLETE object. COMPLETE is written after the result upload. In result.json, controller_done tells you whether the robot controller finished; final_cube_position_m and the XY/Z errors report where the cube ended. The success field is true only when the controller finished and the cube landed within 8 cm of its target. A Nebius job state of COMPLETED does not by itself mean the robot succeeded.
+
+Open **Object Storage → your bucket → isaac-pick-place → your run ID → case-000** to see the same two objects:
+
+![The result.json and COMPLETE objects saved by one simulation case](images/s3-results.jpg)
 
 ## 4. Run the four-job sweep
 
@@ -109,9 +117,15 @@ aws s3 ls "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/" --recursive \
 
 Each case should have result.json and COMPLETE. Compare the success and error fields across cases; the sweep is a small example, not a robot benchmark.
 
+Search for the sweep's run ID in **Jobs** to see all four independent jobs together:
+
+![Four completed Isaac Sim jobs, one for each sweep case](images/sweep-jobs.jpg)
+
 ## Verified run
 
-On October 5, 2026, the Isaac Sim 6.1.0 image was built from this Dockerfile and pushed with digest `sha256:0b944f3a0120190246adf0cb8ecc61ec88f0f546abdf76a027eb1e6ecf81cedc`. On `gpu-l40s-a`, single job `aijob-e00qw0k4wzpdcct5yw` completed with `success: true` and 1.17 cm XY error. Sweep run `20261005T172716Z-e53b186b` submitted four jobs; all four completed with `success: true` and 1.17–1.27 cm XY error. Every case had both S3 objects.
+On October 6, 2026, the tutorial was run end to end: build and push, submit the single job, submit the four-job sweep, and download and inspect all five results. The screenshots above are from that run.
+
+The Isaac Sim 6.1.0 image was built from this Dockerfile and pushed with digest `sha256:8df53e77f57a8355240acc0d078e64ee18b1afd091a74245c228406b16c0b972`. On `gpu-l40s-a`, single job `aijob-e00ndcsb54cm3ng9w6` completed with `success: true` and 1.17 cm XY error. Sweep run `20261006T151711Z-f3974e14` submitted four jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Every case had both S3 objects. Each simulation took about eight minutes after the container started; provisioning and image pulling added about five minutes on this run.
 
 The worker reported an NVIDIA L40S with 46,068 MB VRAM and driver 580.173.02. NVIDIA lists Linux driver 595.58.03 in its [6.1 requirements](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/installation/requirements.html). This headless task passed on the tested worker, but its driver is below NVIDIA's listed version.
 
