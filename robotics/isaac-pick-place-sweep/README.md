@@ -86,7 +86,7 @@ aws s3 cp "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/$CASE_ID/result.json" ./resu
 python3 -m json.tool result.json
 ~~~
 
-In the Nebius console, open **Serverless AI → Jobs** and search for your job name or ID. Its **Overview** shows the image, arguments, and terminal state:
+In the Nebius console, open **Serverless AI → Jobs** and search for your job name or ID. Its **Overview** shows the image, arguments, and terminal state. Account and run identifiers are redacted in the screenshots:
 
 ![Completed single pick-and-place job in the Nebius console](images/single-job.jpg)
 
