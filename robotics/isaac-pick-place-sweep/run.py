@@ -30,7 +30,18 @@ def evaluate(controller_done, final_position, target_position):
     }
 
 
-def simulate(app, pick_x, place_y, max_steps):
+def record_frame(task, robot_links, step):
+    cube_positions, cube_orientations = task.cubes[0].get_world_poses()
+    return {
+        "time_s": step * PHYSICS_DT,
+        "phase": task.status()["phase"],
+        "cube_position_m": cube_positions.numpy()[0].tolist(),
+        "cube_orientation_wxyz": cube_orientations.numpy()[0].tolist(),
+        "link_positions_m": robot_links.get_world_poses()[0].numpy().tolist(),
+    }
+
+
+def simulate(app, pick_x, place_y, max_steps, recording_path=None):
     # Isaac extensions must be imported after the app starts.
     import isaacsim.core.experimental.utils.app as app_utils
 
@@ -56,13 +67,33 @@ def simulate(app, pick_x, place_y, max_steps):
     task.initialize()
     task.reset()
 
+    frames = []
+    if recording_path is not None:
+        from isaacsim.core.experimental.prims import RigidPrim
+
+        robot_links = RigidPrim(task.scenario.articulation.link_paths[0])
+        frames.append(record_frame(task, robot_links, 0))
+
     for step in range(1, max_steps + 1):
         app.update()
         task.step(PHYSICS_DT)
+        if recording_path is not None and step % 6 == 0:
+            frames.append(record_frame(task, robot_links, step))
         if task.is_done or task.failed:
             break
     # Let the cube settle before measuring its final pose.
     app_utils.update_app(steps=30)
+
+    if recording_path is not None:
+        frames.append(record_frame(task, robot_links, step + 30))
+        recording = {
+            "link_names": task.scenario.articulation.link_names,
+            "pick_position_m": pick_position,
+            "target_position_m": target_position,
+            "cube_size_m": CUBE_HEIGHT_M,
+            "frames": frames,
+        }
+        recording_path.write_text(json.dumps(recording, allow_nan=False) + "\n")
 
     cube_positions = task.cubes[0].get_world_poses()[0].numpy()
     final_position = cube_positions[0].tolist()
@@ -95,7 +126,7 @@ def check_s3_environment():
         raise ValueError(f"missing S3 environment variables: {', '.join(missing)}")
 
 
-def upload(result_path, run_id, case_id):
+def upload(result_path, run_id, case_id, recording_path=None):
     import boto3
 
     check_s3_environment()
@@ -107,6 +138,8 @@ def upload(result_path, run_id, case_id):
         endpoint_url=os.environ["S3_ENDPOINT_URL"],
         region_name=os.environ["AWS_DEFAULT_REGION"],
     )
+    if recording_path is not None:
+        client.upload_file(str(recording_path), bucket, f"{case_prefix}/trajectory.json")
     client.upload_file(str(result_path), bucket, f"{case_prefix}/result.json")
     # Readers use COMPLETE to tell that result.json finished uploading.
     client.put_object(Bucket=bucket, Key=f"{case_prefix}/COMPLETE", Body=b"")
@@ -122,6 +155,7 @@ def main():
     parser.add_argument("--max-steps", type=int, default=5000)
     parser.add_argument("--output-dir", type=Path, default=Path("/tmp/isaac-results"))
     parser.add_argument("--local", action="store_true", help="keep result locally without S3 upload")
+    parser.add_argument("--record-motion", action="store_true", help="save measured robot and cube poses for Rerun replay")
     args = parser.parse_args()
     for name in ("run_id", "case_id"):
         if not re.fullmatch(r"[A-Za-z0-9_-]+", getattr(args, name)):
@@ -136,15 +170,16 @@ def main():
 
     from isaacsim import SimulationApp
 
-    app = SimulationApp({"headless": True})
-    result = simulate(app, args.pick_x, args.place_y, args.max_steps)
-    result.update({"run_id": args.run_id, "case_id": args.case_id})
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    recording_path = args.output_dir / "trajectory.json" if args.record_motion else None
+    app = SimulationApp({"headless": True})
+    result = simulate(app, args.pick_x, args.place_y, args.max_steps, recording_path)
+    result.update({"run_id": args.run_id, "case_id": args.case_id})
     result_path = args.output_dir / "result.json"
     result_path.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     print(json.dumps(result, allow_nan=False), flush=True)
     if not args.local:
-        upload(result_path, args.run_id, args.case_id)
+        upload(result_path, args.run_id, args.case_id, recording_path)
     # Isaac's fast shutdown can exit Python, so publish before closing the app.
     app.close()
 

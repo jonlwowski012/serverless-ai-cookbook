@@ -24,7 +24,7 @@ class RecipeTest(unittest.TestCase):
             image="example/image:tag", platform="gpu-l40s-a", preset="1gpu-8vcpu-32gb",
             timeout="2h", bucket="bucket", region="eu-north1", s3_secret="storage-keys",
             prefix="isaac-pick-place", subnet_id=None,
-            profile=None,
+            profile=None, record_motion=False,
         )
         commands = [job_command(options, "run-1", f"case-{i:03d}", point) for i, point in enumerate(points)]
         self.assertEqual(len({command[command.index("--name") + 1] for command in commands}), 4)
@@ -38,6 +38,9 @@ class RecipeTest(unittest.TestCase):
         self.assertTrue(all("AWS_SECRET_ACCESS_KEY=storage-keys" in command for command in commands))
         self.assertTrue(all("S3_ENDPOINT_URL=https://storage.eu-north1.nebius.cloud" in command for command in commands))
         self.assertTrue(all("/opt/isaac-sweep/run.py" not in command[command.index("--args") + 1] for command in commands))
+        options.record_motion = True
+        recorded = job_command(options, "run-1", "case-000", points[0])
+        self.assertIn("--record-motion", recorded[recorded.index("--args") + 1])
 
     def test_task_success_needs_controller_and_final_pose(self):
         target = [-0.4, 0.2, 0.02575]
@@ -65,10 +68,13 @@ class RecipeTest(unittest.TestCase):
             result = Path(directory) / "result.json"
             result.write_text("{}")
             with patch.dict(os.environ, env), patch.dict(sys.modules, {"boto3": SimpleNamespace(client=lambda *a, **k: client)}):
-                upload(result, "run-1", "case-000")
-        self.assertEqual([name for name, _ in calls], ["result", "complete"])
-        self.assertEqual(calls[0][1][2], "isaac-pick-place/run-1/case-000/result.json")
-        self.assertEqual(calls[1][1]["Key"], "isaac-pick-place/run-1/case-000/COMPLETE")
+                recording = Path(directory) / "trajectory.json"
+                recording.write_text("{}")
+                upload(result, "run-1", "case-000", recording)
+        self.assertEqual([name for name, _ in calls], ["result", "result", "complete"])
+        self.assertEqual(calls[0][1][2], "isaac-pick-place/run-1/case-000/trajectory.json")
+        self.assertEqual(calls[1][1][2], "isaac-pick-place/run-1/case-000/result.json")
+        self.assertEqual(calls[2][1]["Key"], "isaac-pick-place/run-1/case-000/COMPLETE")
 
     def test_upload_error_keeps_job_failed(self):
         closed = []

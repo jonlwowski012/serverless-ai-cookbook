@@ -38,6 +38,8 @@ def job_command(options, run_id, case_id, point):
         "--pick-x", str(point["pick_x"]),
         "--place-y", str(point["place_y"]),
     ]
+    if options.record_motion:
+        container_args.append("--record-motion")
     command = [
         "nebius", "ai", "job", "create",
         "--name", f"isaac-pick-{run_id}-{case_id}",
@@ -85,6 +87,7 @@ def parse_inputs():
     parser.add_argument("--subnet-id")
     parser.add_argument("--profile", help="Nebius CLI profile (defaults to the active profile)")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--record-motion", action="store_true", help="save trajectory.json for each job")
     options = parser.parse_args()
     if not options.prefix.strip("/"):
         parser.error("--prefix must contain a path component")

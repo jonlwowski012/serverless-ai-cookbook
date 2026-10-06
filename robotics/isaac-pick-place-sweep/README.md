@@ -14,6 +14,10 @@ Run a Franka Panda pick-and-place task in Isaac Sim. Start with one Nebius AI Jo
 
 The default sweep changes the cube's pickup X and placement Y positions. A result can report robot-task failure even when its job completes: the job ran successfully, but the cube did not land near its target.
 
+![Four recorded pick-and-place simulations replayed together in Rerun](images/rerun-sweep.png)
+
+Four independent cloud jobs at 5.8 seconds of simulated time, replayed in Rerun. The simplified arm connects the Franka's link origins; the blue cube and cyan path show its recorded motion, with a green pickup marker and yellow placement target.
+
 ## Requirements
 
 - Authenticated [Nebius CLI](https://docs.nebius.com/cli/), Docker, AWS CLI, and a [Container Registry](https://docs.nebius.com/container-registry/quickstart) in the same project as the jobs.
@@ -121,11 +125,41 @@ Search for the sweep's run ID in **Jobs** to see all four independent jobs toget
 
 ![Four completed Isaac Sim jobs, one for each sweep case](images/sweep-jobs.jpg)
 
+## 5. Optional: replay the motion in Rerun
+
+Add `--record-motion` to the sweep command to save `trajectory.json` alongside each result. It records cube poses, robot-link positions, and task phases at 10 Hz, plus the initial and settled final poses. Rerun runs on your computer; the cloud image needs no additional packages.
+
+~~~bash
+python3 launch.py --image "$IMAGE" --bucket "$S3_BUCKET" \
+  --region "$REGION" --s3-secret "$S3_SECRET" --record-motion
+~~~
+
+After the jobs finish, download the new run and open the recording:
+
+~~~bash
+export RUN_ID='<run-id-from-launch-output>'
+aws s3 sync "s3://$S3_BUCKET/isaac-pick-place/$RUN_ID/" "results/$RUN_ID/" \
+  --endpoint-url "$S3_ENDPOINT_URL"
+python3 -m venv .venv-rerun
+source .venv-rerun/bin/activate
+python -m pip install rerun-sdk==0.38.1
+python visualize.py results/"$RUN_ID"/case-* --output results/pick-place.rrd
+rerun results/pick-place.rrd
+~~~
+
+Press **Play** or scrub the **simulation** timeline to inspect pickup, lift, transfer, and release. Each panel is a separate job, aligned by simulated time. The arm is a pose visualization rather than a photorealistic Isaac render. Only jobs submitted with `--record-motion` produce replay data. See [Rerun's viewer guide](https://rerun.io/docs/getting-started/configure-the-viewer/navigating-the-viewer) for navigation controls.
+
+The same four jobs after placement, at 10.133 seconds. The cube is near the yellow target in each case; use `result.json` for the measured placement errors.
+
+![Four recorded simulations after placing their cubes near the targets](images/rerun-placed.png)
+
 ## Verified run
 
-On October 6, 2026, the tutorial was run end to end: build and push, submit the single job, submit the four-job sweep, and download and inspect all five results. The screenshots above are from that run.
+On October 6, 2026, the tutorial was run end to end: build and push, submit the single job, submit the four-job sweep, and download and inspect all five results. The Nebius console screenshots are from that run.
 
 The Isaac Sim 6.1.0 image was built from this Dockerfile and pushed with digest `sha256:8df53e77f57a8355240acc0d078e64ee18b1afd091a74245c228406b16c0b972`. On `gpu-l40s-a`, single job `aijob-e00ndcsb54cm3ng9w6` completed with `success: true` and 1.17 cm XY error. Sweep run `20261006T151711Z-f3974e14` submitted four jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Every case had both S3 objects. Each simulation took about eight minutes after the container started; provisioning and image pulling added about five minutes on this run.
+
+The optional recording path was also tested in a fresh four-job sweep, `20261006T154718Z-659d897b`, using image digest `sha256:2369367d29e30c9baa3f4f1c28d0a4fc466d2a4b9b947be7ff1238efbc60955e`. All four jobs completed with `success: true`, 1.17–1.27 cm XY error, and all three S3 objects. Each trajectory contained 98 measured frames covering about 10.1 seconds; its final cube pose matched `result.json`. The Rerun screenshots show these recordings. They contain no account, bucket, job, or run identifiers.
 
 The worker reported an NVIDIA L40S with 46,068 MB VRAM and driver 580.173.02. NVIDIA lists Linux driver 595.58.03 in its [6.1 requirements](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/installation/requirements.html). This headless task passed on the tested worker, but its driver is below NVIDIA's listed version.
 
