@@ -109,6 +109,7 @@ Domain-specific simulation and analysis workloads.
 
 Robotics and physical-AI experiment loops.
 
+- [`unity-pick-and-place-demo`](./robotics/unity-pick-and-place-demo/README.md) — run one Unity UR3 pick-and-place job with ROS 2 and a shipped learned controller; download the video and results; includes a four-step tutorial and one-time Unity build instructions
 - [`lerobot-finetune-job`](./robotics/lerobot-finetune-job/README.md) — fine-tune a LeRobot ACT or Diffusion policy on a robotics dataset in a serverless GPU job
 - [`smolva-ft-norma-core`](./robotics/smolva-ft-norma-core/README.md) — fine-tune SmolVLA for SO-101 with bundled trajectories
 
