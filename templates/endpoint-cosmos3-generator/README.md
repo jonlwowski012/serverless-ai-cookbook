@@ -207,6 +207,7 @@ nebius ai endpoint create \
   --platform gpu-h100-sxm \
   --preset 1gpu-16vcpu-200gb \
   --preemptible \
+  --follows-spot-price \
   --container-port 8000 \
   --shm-size 32Gi \
   --disk-size 500Gi \
@@ -233,6 +234,11 @@ results). A good fit for preemptible capacity.
 | --- | --- | --- | --- |
 | **Cosmos3-Edge** (4B) | `nvidia/Cosmos3-Edge` | `gpu-h100-sxm` / `1gpu-16vcpu-200gb` or `gpu-l40s-a` / `1gpu-16vcpu-64gb` | No sound generation on Edge. Not validated in this template. |
 | **Cosmos3-Super** (64B) | `nvidia/Cosmos3-Super`, add `--tensor-parallel-size 8 --enable-layerwise-offload` | `gpu-h200-sxm` / `8gpu-128vcpu-1600gb` | Highest quality; Nebius offers 1- and 8-GPU presets. Not validated in this template. |
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

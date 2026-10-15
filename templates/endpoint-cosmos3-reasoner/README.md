@@ -225,6 +225,7 @@ nebius ai endpoint create \
   --platform gpu-h100-sxm \
   --preset 1gpu-16vcpu-200gb \
   --preemptible \
+  --follows-spot-price \
   --container-port 8000 \
   --shm-size 16Gi \
   --disk-size 500Gi \
@@ -250,6 +251,11 @@ within ~1.5× of the H100 figures above. Good fit for preemptible capacity.
 | --- | --- | --- | --- |
 | **Cosmos3-Edge** (4B) | `nvidia/Cosmos3-Edge` | `gpu-h100-sxm` / `1gpu-16vcpu-200gb` (validated), `gpu-rtx6000-a` / `1gpu-24vcpu-218gb` (uk-south2), or `gpu-l40s-a` / `1gpu-16vcpu-64gb` | Same flags, validated with this template's requests on H100. 4.7 GiB of weights, 131k context, ready in ~7 min. Edge **reasons by default** (emits `<think>…</think>` even without the instruction) and spends ~2× Nano's prompt tokens per video — give it `max_tokens ≥ 512` or ask for "only the letter/JSON" when you want a short answer. |
 | **Cosmos3-Super** (64B) | `nvidia/Cosmos3-Super` and `--tensor-parallel-size 8` | `gpu-h200-sxm` / `8gpu-128vcpu-1600gb` | Highest quality; Nebius offers 1- and 8-GPU presets, so Super runs TP=8. Not validated in this template. |
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

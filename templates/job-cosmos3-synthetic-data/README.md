@@ -138,6 +138,7 @@ nebius ai job create \
   --platform gpu-rtx6000-a \
   --preset 1gpu-24vcpu-218gb \
   --preemptible \
+  --follows-spot-price \
   --restart-policy on-failure \
   --timeout 6h \
   --shm-size 32Gi \
@@ -150,6 +151,11 @@ nebius ai job create \
 
 Fan-out example — four jobs, four shards: add `--env SHARD=0/4` … `--env SHARD=3/4` and the
 same `RUN_ID`. On H100 in eu-north1 use `--platform gpu-h100-sxm --preset 1gpu-16vcpu-200gb`.
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

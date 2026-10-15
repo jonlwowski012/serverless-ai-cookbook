@@ -40,10 +40,16 @@ nebius ai job create \
   --platform gpu-h100-sxm \
   --preset 1gpu-16vcpu-200gb \
   --preemptible \
+  --follows-spot-price \
   --shm-size 16Gi \
   --disk-size 500Gi \
   --command 'curl -fsSL https://raw.githubusercontent.com/nebius/serverless-ai-cookbook/main/training/axolotl-finetuning/src/config.yaml -o /workspace/data/config.yaml && export RUN_ID=run-$(date +%Y%m%d-%H%M%S) && axolotl train /workspace/data/config.yaml && mkdir -p /workspace/data/output/$RUN_ID && cp -r /workspace/output/. /workspace/data/output/$RUN_ID'
 ```
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

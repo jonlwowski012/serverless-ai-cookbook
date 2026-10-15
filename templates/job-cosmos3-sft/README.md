@@ -161,6 +161,7 @@ nebius ai job create \
   --platform gpu-h100-sxm \
   --preset 8gpu-128vcpu-1600gb \
   --preemptible \
+  --follows-spot-price \
   --restart-policy never \
   --timeout 6h \
   --shm-size 128Gi \
@@ -173,6 +174,11 @@ nebius ai job create \
 
 `--shm-size` matters: eight `torchrun` ranks exchange tensors through `/dev/shm` (NVIDIA runs
 the container with `--ipc=host`). The 8×H100 preset has 1.6 TB of RAM, so 128 GiB is safe.
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

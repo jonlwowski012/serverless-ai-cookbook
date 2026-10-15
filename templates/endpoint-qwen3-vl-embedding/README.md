@@ -176,6 +176,7 @@ nebius ai endpoint create \
   --platform gpu-h100-sxm \
   --preset 1gpu-16vcpu-200gb \
   --preemptible \
+  --follows-spot-price \
   --container-port 8000 \
   --shm-size 16Gi \
   --disk-size 500Gi \
@@ -200,6 +201,11 @@ Then use that token as `TOKEN` in the requests above (`Authorization: Bearer <to
 
 Cheaper variant — the **2B** on a single L40S (change `--model` to
 `Qwen/Qwen3-VL-Embedding-2B`, `--platform gpu-l40s-a`, `--preset 1gpu-8vcpu-32gb`).
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 
