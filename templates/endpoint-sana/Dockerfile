@@ -1,6 +1,7 @@
 # Sana text-to-image server. Pinned on purpose: the previous revision of this
 # template pointed at a rolling tag that did not exist and failed to pull.
-FROM pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
+# CUDA 13.0 retains H100 support and includes RTX Blackwell (sm_120) kernels.
+FROM pytorch/pytorch:2.13.0-cuda13.0-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
