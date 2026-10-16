@@ -1,4 +1,4 @@
-FROM ros:humble-ros-base-jammy
+FROM ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip git ffmpeg xserver-xorg-core mesa-utils libgl1-mesa-dri libglx-mesa0 \

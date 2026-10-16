@@ -56,6 +56,10 @@ the container runs this player, without the Editor or its credentials.
 
 ## 2. Build and push the container
 
+The Dockerfile pins `ros:humble-ros-base-jammy` to the base tested on Nebius:
+`sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19`. Change the pin explicitly to
+use another base; Ubuntu/ROS APT packages still come from live repositories.
+
 Use your existing registry login:
 
 ```bash
