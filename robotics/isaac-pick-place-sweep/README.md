@@ -157,11 +157,11 @@ The same four jobs after placement, at 10.133 seconds. The cube is near the yell
 
 ## Verified run
 
-On October 6, 2026, the tutorial was run end to end: build and push, submit the single job, submit the four-job sweep, and download and inspect all five results. The Nebius console screenshots are from that run.
+On October 16, 2026, the digest-pinned Dockerfile was rebuilt and tested end to end: push the image, submit the single job and four-job recording sweep, download the results, and replay the recordings in Rerun 0.38.1. The tested image digest was `sha256:7efbc82dd4ba25f4bfdee85a4bdfe774afca271b01e3e1b56faece914de27568`.
 
-The Isaac Sim 6.1.0 image was built from this Dockerfile and pushed with digest `sha256:8df53e77f57a8355240acc0d078e64ee18b1afd091a74245c228406b16c0b972`. On `gpu-l40s-a`, single job `aijob-e00ndcsb54cm3ng9w6` completed with `success: true` and 1.17 cm XY error. Sweep run `20261006T151711Z-f3974e14` submitted four jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Every case had both S3 objects. Each simulation took about eight minutes after the container started; provisioning and image pulling added about five minutes on this run.
+On `gpu-l40s-a`, single job `aijob-e00fa9by4w00zv4kd4` completed with `success: true`, 1.17 cm XY error, and both S3 objects. Recording sweep `20261016T155745Z-e0594113` submitted four independent jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Each case had all three S3 objects and 98 measured frames covering about 10.1 seconds. Every final recorded cube pose matched `result.json`.
 
-The optional recording path was also tested in a fresh four-job sweep, `20261006T154718Z-659d897b`, using image digest `sha256:2369367d29e30c9baa3f4f1c28d0a4fc466d2a4b9b947be7ff1238efbc60955e`. All four jobs completed with `success: true`, 1.17–1.27 cm XY error, and all three S3 objects. Each trajectory contained 98 measured frames covering about 10.1 seconds; its final cube pose matched `result.json`. The Rerun screenshots show these recordings. They contain no account, bucket, job, or run identifiers.
+Jobs took about 13 minutes each, including provisioning and image pulling. The console and Rerun screenshots above were captured during the earlier October 6 validation runs.
 
 The worker reported an NVIDIA L40S with 46,068 MB VRAM and driver 580.173.02. NVIDIA lists Linux driver 595.58.03 in its [6.1 requirements](https://docs.isaacsim.omniverse.nvidia.com/6.1.0/installation/requirements.html). This headless task passed on the tested worker, but its driver is below NVIDIA's listed version.
 
