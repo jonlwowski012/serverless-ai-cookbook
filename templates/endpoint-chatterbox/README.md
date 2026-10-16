@@ -2,7 +2,7 @@
 
 <!-- factory:deploy -->
 
-<a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00gw2b7v3pxetvpy7%2Fchatterbox-serve%3Ad315ae1&amp;targetPort=8000&amp;platform=gpu-h100-sxm&amp;preset=1gpu-16vcpu-200gb&amp;diskSize=500GiB&amp;preemptible=true&amp;auth=true"><img src="../assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a>
+<a href="https://console.nebius.com/serverless/endpoint/create?image=cr.eu-north1.nebius.cloud%2Fe00gw2b7v3pxetvpy7%2Fchatterbox-serve%3A660347b&amp;targetPort=8000&amp;platform=gpu-h100-sxm&amp;preset=1gpu-16vcpu-200gb&amp;diskSize=500GiB&amp;preemptible=true&amp;auth=true"><img src="../assets/create-endpoint.svg" alt="Create Endpoint" width="138" height="20"></a>
 
 <!-- /factory:deploy -->
 
@@ -175,12 +175,13 @@ creation and cannot be recovered later (recreate the endpoint to rotate it) — 
 
 ```bash
 nebius ai endpoint create \
-  --image cr.eu-north1.nebius.cloud/e00gw2b7v3pxetvpy7/chatterbox-serve:d315ae1 \
+  --image cr.eu-north1.nebius.cloud/e00gw2b7v3pxetvpy7/chatterbox-serve:660347b \
   --public \
   --auth token \
   --platform gpu-h100-sxm \
   --preset 1gpu-16vcpu-200gb \
   --preemptible \
+  --follows-spot-price \
   --container-port 8000 \
   --shm-size 16Gi \
   --disk-size 500Gi
@@ -188,6 +189,15 @@ nebius ai endpoint create \
 
 `--auth token` makes Nebius generate a bearer token and print it **once** (`Token: …`) — copy it into
 `TOKEN`. Pass `--token <value>` to set your own, or `--token-secret <secret-version-id>` for CI.
+
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
+
+### Other platforms
+
+Also runs on **RTX Pro 6000 Blackwell**: `--platform gpu-rtx6000-a --preset 1gpu-24vcpu-218gb` in `uk-south2`, or `--platform gpu-rtx6000 --preset 1gpu-24vcpu-218gb` in `us-central1`, plus `--parent-id` of a project in that region (or pick the platform in the create form). Validated with the `660347b` image, which includes Blackwell `sm_120` kernels.
 
 <!-- /factory:cli -->
 
@@ -201,4 +211,4 @@ nebius ai endpoint create \
 | `speed is not supported`                                           | OpenAI `speed` is accepted in the schema but Chatterbox has no speed knob in v1                                                                      |
 | `502 failed to connect to local service`                           | Tunnel up but port 8000 not bound yet — poll `/v1/models`; RUNNING ≠ API ready                                                                       |
 | Slow first pull                                                    | Add optional `HF_TOKEN`; disk throughput scales with size — template asks for 500 Gi                                                                 |
-| Wrong image or port                                                | `cr.eu-north1.nebius.cloud/e00gw2b7v3pxetvpy7/chatterbox-serve:d315ae1` on container port `8000` (`gpu-h100-sxm` / `1gpu-16vcpu-200gb`, preemptible) |
+| Wrong image or port                                                | `cr.eu-north1.nebius.cloud/e00gw2b7v3pxetvpy7/chatterbox-serve:660347b` on container port `8000` (`gpu-h100-sxm` / `1gpu-16vcpu-200gb`, preemptible) |

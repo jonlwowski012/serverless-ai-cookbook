@@ -213,6 +213,7 @@ nebius ai job create \
   --platform  "gpu-l40s-a" \
   --preset    "1gpu-24vcpu-96gb" \
   --preemptible \
+  --follows-spot-price \
   --timeout   "2h" \
   --volume    "${BUCKET_ID}:/mnt/bucket:rw" \
   --env       "PYTHONUNBUFFERED=1" \
@@ -227,6 +228,7 @@ What it does, in order: extract the bundle from `/mnt/bucket/code/`, `cd` into i
 
 Why these flags matter:
 
+- **`--preemptible --follows-spot-price`** — `--preemptible` requires a pricing model. `--follows-spot-price` accepts the current spot price with no cap (it can change every 15 minutes while the job runs); to cap it, pass `--spot-pricing-policy-id <policy_ID>` instead. See [Spot pricing and pricing policies](https://docs.nebius.com/signup-billing/pricing-policy).
 - **`--steps 2000 --batch-size 8`** are inlined as literals — to change them, edit the `--args` string directly. Env vars are reserved for values that *must* live in the container env: `PYTHONUNBUFFERED`, `HF_TOKEN`, and `RUN_TAG` (generated dynamically from the local shell, used both in `--name` and inside the container script as `$RUN_TAG`).
 - **`PYTHONUNBUFFERED=1`** — `scripts/train.py` uses plain `print(...)` without `flush=True`. Without this env var, Python block-buffers stdout under the cloud-job logger and the run *looks* frozen for tens of minutes before anything appears.
 - **`--log-every 5`** — `train.py` defaults to `--log-every 20`. Combined with a slow first batch, you'd wait minutes for the first heartbeat. `5` gives a useful "is this thing alive?" signal within a minute.

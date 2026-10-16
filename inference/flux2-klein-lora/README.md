@@ -56,6 +56,10 @@ The default is one preemptible B200 (`gpu-b200-sxm`,
 `1gpu-20vcpu-224gb`) with a 300 GiB disk. It incurs GPU, disk, and public
 address charges until deleted. Preemptible instances are cheaper but can be
 interrupted; set `PREEMPTIBLE=false` for production-like availability.
+A preemptible endpoint follows the current spot price by default, with no cap:
+the price can change every 15 minutes while it runs. To cap it, create a
+[pricing policy](https://docs.nebius.com/signup-billing/manage-pricing-policy)
+for the platform and set `SPOT_PRICING_POLICY_ID` to its ID.
 
 The endpoint has one worker and serializes inference on its GPU. A reference
 1024×1024, 20-step workload measured about 3.3 seconds serial latency on one
@@ -251,6 +255,8 @@ cleanup.
 - H200: set `PLATFORM=gpu-h200-sxm` and
   `PRESET=1gpu-16vcpu-200gb`.
 - Non-preemptible: set `PREEMPTIBLE=false`.
+- Capped spot price: set `SPOT_PRICING_POLICY_ID=<pricing policy ID>`; without
+  it, preemptible endpoints follow the spot price.
 - Private endpoint: set `PUBLIC=false` and run the smoke test from a network
   path that can reach it.
 - Different trigger/scale: change `LORA_ADAPTER_NAME`, `LORA_SCALE`, and the

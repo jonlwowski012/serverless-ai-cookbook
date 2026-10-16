@@ -25,6 +25,7 @@ jq -e '
   and .platform == "gpu-b200-sxm"
   and .auth == "token"
   and .preemptible == true
+  and .pricing == "follows-spot-price"
   and .secrets == "configured; values and selectors redacted"
 ' <<<"$dry_run" >/dev/null
 
