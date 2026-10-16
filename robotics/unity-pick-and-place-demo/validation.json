@@ -1,6 +1,6 @@
 {
   "verified": true,
-  "status": "verified_nebius_organized_pick_place",
+  "status": "verified_nebius_digest_pinned_pick_place",
   "prior_verified_ros_policy_record": "historical_records.validation-ros-1fps.json",
   "attempts": [
     {
@@ -277,6 +277,89 @@
         "source_revision": "111705a8a4417fb7fe1816f46daa67ef01342464",
         "ros": 2
       }
+    },
+    {
+      "job_id": "aijob-e00qcj1my269jtchjv",
+      "run_id": "pick-pinned-20261016T164545Z",
+      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1016pin2",
+      "digest": "sha256:01f748fd6ede7f06bf88a5a04516bd6cee86666773213ed7db136e348e9abac3",
+      "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
+      "tested_source_commit": "10a2f91924ca634eeb02b6300a43a9025681c0e6",
+      "state": "COMPLETED",
+      "started_at": "2026-10-16T16:48:57.742485483Z",
+      "finished_at": "2026-10-16T16:50:55.048753552Z",
+      "vm_removed": true,
+      "compute_instance_id": "computeinstance-e00mn27pdpg4jpmj98",
+      "result": {
+        "success": true,
+        "requested_seconds": 180.0,
+        "renderer": {
+          "device": "NVIDIA L40S/PCIe/SSE2",
+          "vendor": "NVIDIA Corporation",
+          "api": "OpenGLCore"
+        },
+        "model_sha256": "e2d30b0c3477023f1a4728b5e4485583c2d9d2ed01f98f594b8a003965f7351a",
+        "policy_observations": 537,
+        "applied_commands": 535,
+        "ros_message_counts": {
+          "/camera/image/compressed": 270,
+          "/cube_ground_truth": 537,
+          "/goal": 536,
+          "/gripper_command": 537,
+          "/gripper_contacts": 537,
+          "/joint_commands": 537,
+          "/joint_states": 537,
+          "/task_phase": 537,
+          "/tool_pose": 537,
+          "/tool_position": 537
+        },
+        "cube_lift_height_m": 0.2645558714866638,
+        "cube_displacement_m": 0.5399180972844583,
+        "placement_error_m": 0.010239540307807138,
+        "camera_localization_error_m": 0.0010464371262307777,
+        "inference_latency_p50_ms": 0.5380819999913911,
+        "task": "pick_place",
+        "duration_seconds": 53.512611865997314,
+        "joint_samples": 536,
+        "max_joint_range_deg": 144.52535238284503,
+        "grip_range": 0.21012998278820305,
+        "image_count": 804
+      },
+      "checks": [
+        "Built the exact PR Dockerfile with the pinned base; published image and submitted via job.sh",
+        "All 829 downloaded artifacts passed check.py, including PNG decoding, full video decode/timing, CSV values, task contacts/lift/carry/release/placement and applied-command consistency",
+        "Every ROS recording message deserialized inside the published image",
+        "Recorded ONNX action replay, camera localization and measured scene kinematics checks passed inside the published image",
+        "Inspected carry and placed-cube video frames",
+        "Actual Unity renderer NVIDIA L40S / OpenGLCore",
+        "Automatic task shutdown and COMPLETED job state",
+        "GPU instance confirmed NotFound after automatic deletion"
+      ],
+      "artifacts": {
+        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-pinned-20261016T164545Z/",
+        "downloaded_files": 829,
+        "preview_sha256": "4bac1897c3cb491674cca7718ebe7efc7da98ea43f02253c3664fde143840abf",
+        "rosbag_sha256": "e1574be33379420171d741c6a3b5c9784d6398b4138aa0dd1763f4a03a11fa4b"
+      },
+      "video": {
+        "fps": 15,
+        "duration_seconds": 53.533333,
+        "frames": 803,
+        "captured_images": 804,
+        "max_capture_gap_seconds": 0.09641170501708984,
+        "median_capture_gap_seconds": 0.06666946411132812
+      },
+      "unity_build": {
+        "editor_version": "6000.6.5f1",
+        "source_revision": "111705a8a4417fb7fe1816f46daa67ef01342464",
+        "ros": 2
+      },
+      "build_notes": [
+        "Used the existing Unity Linux player; no Editor rebuild",
+        "Built with DOCKER_BUILDKIT=0 to reuse the previously verified dependency layers; pinned Dockerfile unchanged",
+        "The first image, ur3:1016pin1, rebuilt dependency layers but could not be published: Docker upload stalled and a chunked layer finalization returned HTTP 500. No cloud run was submitted for that image",
+        "This run validates the pinned-base configuration with cached packages, not the freshly reinstalled dependency versions from the failed publication attempt"
+      ]
     }
   ],
   "graphics_probes": [
@@ -319,9 +402,9 @@
     "reason": "15 FPS capture succeeded with 901 frames, but FFmpeg 4.4 rejected concat option directives. Encoder fixed, preview recovered locally; provider failure remains a failure.",
     "vm_removed": true
   },
-  "date": "2026-10-09",
-  "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009org",
-  "image_digest": "sha256:03f3878e078c1c13083356b31f9b96f2692a01c2a779edd132c61b8ebcbeaabf",
+  "date": "2026-10-16",
+  "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1016pin2",
+  "image_digest": "sha256:01f748fd6ede7f06bf88a5a04516bd6cee86666773213ed7db136e348e9abac3",
   "limits": [
     "One calibrated red cube and tray; no randomized-scene benchmark or physical hardware validation",
     "Color segmentation and geometric IK guide a learned joint servo; gripper task sequence is scripted",
@@ -626,5 +709,6 @@
     "runtime_matches_verified_image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009simple",
     "verified_job_id": "aijob-e00ypv9z5fr79zzr86",
     "verified_image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009org"
-  }
+  },
+  "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19"
 }

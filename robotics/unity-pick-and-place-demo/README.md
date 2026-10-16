@@ -125,8 +125,8 @@ and partial results. [Additional evidence and troubleshooting](docs/advanced.md)
 |:---:|:---:|:---:|
 | ![Gripper contacts the cube](assets/grasp.png) | ![Robot carries the cube](assets/carry.png) | ![Cube rests in the tray](assets/placed.png) |
 
-The simplified cookbook was verified on Nebius: **53.9 cm of cube motion and
-7.1 mm placement error**, with a 15 FPS NVIDIA-rendered video. The bundled preview
+The simplified cookbook was verified on Nebius: **54.0 cm of cube motion and
+10.2 mm placement error**, with a 15 FPS NVIDIA-rendered video. The bundled preview
 shows the earlier verified run. See [validation history](docs/advanced.md#validation-history)
 and [validation.json](validation.json) for both runs and their image digests.
 

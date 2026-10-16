@@ -136,3 +136,12 @@ has 800 frames at 15 FPS; all 826 artifacts passed verification, all ROS message
 deserialized, and the recorded learned actions replayed correctly. The GPU
 instance was automatically removed. Exact digests and measurements are recorded
 in `validation.json`; the bundled preview remains the earlier verified run.
+
+On 2026-10-16, the digest-pinned PR was tested in job
+`aijob-e00qcj1my269jtchjv` using image `ur3:1016pin2`. It completed with 54.0 cm
+of cube motion and 10.2 mm placement error. All 829 artifacts passed checks; the
+53.5-second video contains 803 frames at 15 FPS. ROS deserialization and policy
+replay passed inside the published image, and the GPU instance was removed.
+The build reused cached dependency layers after a separate image upload hit a
+registry finalization error. Freshly reinstalled APT/Python package versions from
+that unpublished image were not cloud-validated. See `validation.json` for details.
