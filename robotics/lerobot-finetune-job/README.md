@@ -345,6 +345,7 @@ nebius ai job create \
   --timeout "6h" \
   --disk-size 450Gi \
   --preemptible \
+  --follows-spot-price \
   --env "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
   --env "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
   --env "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" \
@@ -354,6 +355,8 @@ nebius ai job create \
   ${HF_TOKEN:+--env "HF_TOKEN=$HF_TOKEN"} \
   --args "--policy act --dataset lerobot/pusht --steps 5000"
 ```
+
+> `--preemptible` requires a pricing model. `--follows-spot-price` accepts the current spot price with no cap (it can change every 15 minutes while the job runs); to cap it, pass `--spot-pricing-policy-id <policy_ID>` instead. See [Spot pricing and pricing policies](https://docs.nebius.com/signup-billing/pricing-policy).
 
 **Serverless (Diffusion / gated ALOHA sim)**  
 Runs Diffusion policy on a gated ALOHA simulation dataset; requires HF_TOKEN; uses L40S with modest batch size.
@@ -398,6 +401,7 @@ nebius ai job create \
   --preset "1gpu-16vcpu-64gb" \
   --timeout "6h" --disk-size 450Gi \
   --preemptible \
+  --follows-spot-price \
   --env "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
   --env "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
   --env "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" \

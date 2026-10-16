@@ -24,6 +24,7 @@ done
 : "${PLATFORM:=gpu-b200-sxm}"
 : "${PRESET:=1gpu-20vcpu-224gb}"
 : "${PREEMPTIBLE:=true}"
+: "${SPOT_PRICING_POLICY_ID:=}"
 : "${DISK_SIZE:=300Gi}"
 : "${SHM_SIZE:=16Gi}"
 : "${PUBLIC:=true}"
@@ -56,6 +57,16 @@ done
   exit 2
 }
 
+# Preemptible endpoints must pick a pricing model: cap the hourly price with a
+# pricing policy, or follow the current spot price (no cap).
+if [[ "$PREEMPTIBLE" != "true" ]]; then
+  pricing="on-demand"
+elif [[ -n "$SPOT_PRICING_POLICY_ID" ]]; then
+  pricing="spot-pricing-policy"
+else
+  pricing="follows-spot-price"
+fi
+
 redact_endpoint_json() {
   jq 'walk(if type == "object" then with_entries(select(.key | test("token|secret|password|credential|private_key"; "i") | not)) else . end)'
 }
@@ -73,8 +84,9 @@ if $dry_run; then
     --arg platform "$PLATFORM" \
     --arg preset "$PRESET" \
     --argjson preemptible "$PREEMPTIBLE" \
+    --arg pricing "$pricing" \
     --argjson public "$PUBLIC" \
-    '{dry_run:true,profile:$profile,project_id:$project_id,name:$name,image:$image,platform:$platform,preset:$preset,preemptible:$preemptible,public:$public,auth:"token",secrets:"configured; values and selectors redacted"}'
+    '{dry_run:true,profile:$profile,project_id:$project_id,name:$name,image:$image,platform:$platform,preset:$preset,preemptible:$preemptible,pricing:$pricing,public:$public,auth:"token",secrets:"configured; values and selectors redacted"}'
   exit 0
 fi
 
@@ -122,7 +134,10 @@ args=(
   --env-secret "HF_TOKEN=$HF_TOKEN_SECRET_SELECTOR"
   --format json
 )
-[[ "$PREEMPTIBLE" == "true" ]] && args+=(--preemptible)
+case "$pricing" in
+  spot-pricing-policy) args+=(--preemptible --spot-pricing-policy-id "$SPOT_PRICING_POLICY_ID") ;;
+  follows-spot-price) args+=(--preemptible --follows-spot-price) ;;
+esac
 [[ "$PUBLIC" == "true" ]] && args+=(--public)
 [[ -n "$SUBNET_ID" ]] && args+=(--subnet-id "$SUBNET_ID")
 [[ -n "$REGISTRY_SECRET_SELECTOR" ]] && args+=(--registry-secret "$REGISTRY_SECRET_SELECTOR")

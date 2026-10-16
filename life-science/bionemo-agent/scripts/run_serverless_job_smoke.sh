@@ -10,6 +10,7 @@ TIMEOUT="${TIMEOUT:-20m}"
 QUERY="${QUERY:-protein sequence embedding}"
 JOB_NAME="${JOB_NAME:-bionemo-agent-smoke-$(date +%s)}"
 PREEMPTIBLE="${PREEMPTIBLE:-false}"
+SPOT_PRICING_POLICY_ID="${SPOT_PRICING_POLICY_ID:-}"
 
 CREATE_CMD=(
   nebius ai job create
@@ -23,7 +24,12 @@ CREATE_CMD=(
 )
 
 if [[ "$PREEMPTIBLE" == "true" ]]; then
-  CREATE_CMD+=(--preemptible)
+  # Preemptible jobs must pick a pricing model: a capped pricing policy, or the current spot price.
+  if [[ -n "$SPOT_PRICING_POLICY_ID" ]]; then
+    CREATE_CMD+=(--preemptible --spot-pricing-policy-id "$SPOT_PRICING_POLICY_ID")
+  else
+    CREATE_CMD+=(--preemptible --follows-spot-price)
+  fi
 fi
 
 if [[ -n "$PARENT_ID" ]]; then

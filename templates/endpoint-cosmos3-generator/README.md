@@ -221,6 +221,11 @@ nebius ai endpoint create \
 The `cosmos3` image tag is NVIDIA's Cosmos 3 build of vLLM-Omni (`0.25.0`); it is a moving
 tag, so pin by digest for reproducible deployments.
 
+> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
+> change every 15 minutes while the resource is running, and a higher price does not
+> stop it. Capacity preemption can still stop it — see
+> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
+
 ### Other platforms
 
 Validated on **RTX Pro 6000 Blackwell** (96 GB) in `uk-south2`:
@@ -234,11 +239,6 @@ results). A good fit for preemptible capacity.
 | --- | --- | --- | --- |
 | **Cosmos3-Edge** (4B) | `nvidia/Cosmos3-Edge` | `gpu-h100-sxm` / `1gpu-16vcpu-200gb` or `gpu-l40s-a` / `1gpu-16vcpu-64gb` | No sound generation on Edge. Not validated in this template. |
 | **Cosmos3-Super** (64B) | `nvidia/Cosmos3-Super`, add `--tensor-parallel-size 8 --enable-layerwise-offload` | `gpu-h200-sxm` / `8gpu-128vcpu-1600gb` | Highest quality; Nebius offers 1- and 8-GPU presets. Not validated in this template. |
-
-> ⚠️ `--follows-spot-price` accepts the current spot price with no cap. The price can
-> change every 15 minutes while the resource is running, and a higher price does not
-> stop it. Capacity preemption can still stop it — see
-> [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
 <!-- /factory:cli -->
 

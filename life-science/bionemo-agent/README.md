@@ -371,7 +371,8 @@ curl -sS "$ENDPOINT_URL/generate" \
 | `BIONEMO_MODEL_<SKILL>_URL` | Real service only | HTTP endpoint for each required real backend, for example `BIONEMO_MODEL_STRUCTURE_PREDICTION_URL`. |
 | `BIONEMO_MODEL_<SKILL>_API_KEY` | Real service only | Optional bearer token for a specific real backend. |
 | `TIMEOUT` | Job only | Job timeout, defaults to `20m` for smoke checks. |
-| `PREEMPTIBLE` | Job only | Set to `true` to request preemptible GPU capacity for smoke checks. |
+| `PREEMPTIBLE` | Job only | Set to `true` to request preemptible GPU capacity for smoke checks. The job follows the current spot price (no cap) unless `SPOT_PRICING_POLICY_ID` is set. |
+| `SPOT_PRICING_POLICY_ID` | Job only | Optional [pricing policy](https://docs.nebius.com/signup-billing/manage-pricing-policy) ID that caps the spot price when `PREEMPTIBLE=true`. |
 | `NEBIUS_API_KEY` | Endpoint only | TokenFactory or OpenAI-compatible LLM API key for quick demos. |
 | `NEBIUS_API_KEY_SECRET` | Endpoint only | MysteryBox secret selector for the LLM API key. |
 | `AUTH_TOKEN` | Endpoint only | Bearer token for quick endpoint authentication. |

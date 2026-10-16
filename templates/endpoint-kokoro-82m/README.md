@@ -139,6 +139,10 @@ nebius ai endpoint create \
 > stop it. Capacity preemption can still stop it — see
 > [Following the spot price](https://docs.nebius.com/signup-billing/pricing-policy#following-the-spot-price).
 
+### Other platforms
+
+Also runs on **RTX Pro 6000 Blackwell**: `--platform gpu-rtx6000-a --preset 1gpu-24vcpu-218gb` in `uk-south2`, or `--platform gpu-rtx6000 --preset 1gpu-24vcpu-218gb` in `us-central1`, plus `--parent-id` of a project in that region (or pick the platform in the create form). Validated with the `660347b` image, which includes Blackwell `sm_120` kernels.
+
 <!-- /factory:cli -->
 
 ## Troubleshooting
