@@ -26,7 +26,9 @@ Four independent cloud jobs at 5.8 seconds of simulated time, replayed in Rerun.
 
 ## 1. Build and push the image
 
-The committed Dockerfile starts from Isaac Sim 6.1.0 and runs run.py. The NVIDIA image already includes boto3. From the repository root, set IMAGE to your full Nebius registry path, then build and push:
+The committed Dockerfile pins Isaac Sim 6.1.0 to the tested NVIDIA image digest `sha256:af1d2b4e75d553bfa27beb5a401198654aa8d607f3b7a6749196e9ce253def20` and runs run.py. This keeps the base image fixed even if NVIDIA changes the version tag. To try another Isaac image, update both the tag and digest in the Dockerfile and retest.
+
+The NVIDIA image already includes boto3. From the repository root, set IMAGE to your full Nebius registry path, then build and push:
 
 ~~~bash
 cd robotics/isaac-pick-place-sweep
