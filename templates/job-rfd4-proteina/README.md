@@ -16,8 +16,65 @@ difficulty: intermediate
 
 <!-- /factory:deploy -->
 
-Follow the [recipe](../../life-science/rfd4-proteina/hugging-face/README.md) for
-bucket setup, commands and expected outputs. The image is pulled directly
-from NVIDIA.
+<!-- factory:intro -->
+
+Finite GPU job that installs the pinned public `rfd4-proteina` package into NVIDIA's
+PyTorch image and writes protein designs into a mounted Object Storage bucket, then
+exits. Follow the [recipe](../../life-science/rfd4-proteina/hugging-face/README.md) for
+bucket setup, commands and expected outputs. The image is pulled directly from NVIDIA;
+no mirror or rebuild is used.
+
+**License:** [BSD-3-Clause](../../life-science/rfd4-proteina/licenses/RFD4-BSD-3-Clause.txt)
+for RFD4; Apache-2.0 for the template code. NVIDIA's
+[PyTorch image](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) has its
+own terms.
+
+<!-- /factory:intro -->
 
 [Validation status](../../life-science/rfd4-proteina/validation.md).
+
+<!-- factory:cli -->
+
+## CLI alternative
+
+Upload the example input to your bucket first, as the
+[recipe](../../life-science/rfd4-proteina/hugging-face/README.md) describes. The job
+installs its dependencies at startup, so the first minutes of GPU time are setup.
+
+```bash
+export NEBIUS_PROJECT_ID='project-...'
+export NEBIUS_SUBNET_ID='vpcsubnet-...'
+# bucket in the same project and region; create with:
+#   nebius storage bucket create --name rfd4-data --parent-id <project-id>
+export BUCKET=$(nebius storage bucket get-by-name --name rfd4-data --format jsonpath='{.metadata.id}')
+
+RFD4_CMD="set -e
+apt-get update && apt-get install -y --no-install-recommends libxrender1 libx11-6 libxext6
+unset PYTHONPATH
+export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+test ! -e /data/rfd4/runs/monomer-001
+python -m pip install --no-cache-dir uv==0.13.4
+uv venv --python 3.12 /tmp/rfd4
+uv pip install --python /tmp/rfd4/bin/python --torch-backend cu130 torch==2.14.1 'atomworks[ml,openbabel]==3.0.4' cuequivariance==0.13.0 cuequivariance-torch==0.13.0 cuequivariance-ops-torch-cu13==0.13.0 cuequivariance-ops-cu13==0.13.0 'rfd4-proteina[all-cuda13]==0.0.2'
+/tmp/rfd4/bin/rfd4-generate inputs=/data/rfd4/inputs/monomer.cif out_dir=/data/rfd4/runs/monomer-001 hf_ckpt_path=nvidia/RFD4-Proteina hf_ckpt_revision=a06e2509c7033b010fc43614e9fd840303588502 num_replicates=2 batch_size=1 seed=42 recycle_strategy=medium/front_loaded inference_backend=native compile_lengths=null prevalidate_inputs=true ~metrics"
+
+nebius ai job create \
+  --parent-id "$NEBIUS_PROJECT_ID" \
+  --name rfd4-proteina-monomer \
+  --image nvcr.io/nvidia/pytorch@sha256:f71fd67f6d71f685e0bd08ce6c8df48807624cc5d48886370d3471bc4f89d81d \
+  --platform gpu-h100-sxm \
+  --preset 1gpu-16vcpu-200gb \
+  --disk-size 200Gi \
+  --subnet-id "$NEBIUS_SUBNET_ID" \
+  --volume "$BUCKET:/data:rw" \
+  --container-command /bin/bash \
+  --args "-lc \"$RFD4_CMD\""
+```
+
+The script is the one the button sets. Keep the output folder new for every attempt:
+it refuses to start if the folder already exists, which protects earlier results.
+
+> This contribution has not had live end-to-end acceptance yet; see the
+> [validation status](../../life-science/rfd4-proteina/validation.md).
+
+<!-- /factory:cli -->
