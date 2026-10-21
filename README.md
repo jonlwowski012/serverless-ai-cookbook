@@ -102,6 +102,7 @@ AI gateway and agent deployments.
 Domain-specific simulation and analysis workloads.
 
 - [`bionemo-agent`](./life-science/bionemo-agent/README.md) — deploy an NVIDIA NeMo Agent Toolkit BioNeMo research assistant with a GPU BioNeMo-compatible service
+- [`rfd4-proteina`](./life-science/rfd4-proteina/README.md) — protein design with NVIDIA NIM or the public Hugging Face model, using bucket inputs and outputs
 - [`openmm-simulation`](./life-science/openmm-simulation/README.md) — run GPU-backed molecular dynamics simulations with OpenMM
 - [`parabricks-deepvariant`](./life-science/parabricks-deepvariant/README.md) — run NVIDIA Parabricks DeepVariant genomics workflows with Nebius AI Jobs
 

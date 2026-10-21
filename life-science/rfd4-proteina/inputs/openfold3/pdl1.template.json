@@ -1,0 +1,45 @@
+{
+  "inputs": [
+    {
+      "input_id": "pdl1-binder-001",
+      "molecules": [
+        {
+          "type": "protein",
+          "id": "A",
+          "sequence": "REPLACE_WITH_BINDER_SEQUENCE",
+          "msa": {
+            "query": {
+              "a3m": {
+                "alignment": ">query\nREPLACE_WITH_BINDER_SEQUENCE",
+                "format": "a3m"
+              }
+            }
+          }
+        },
+        {
+          "type": "protein",
+          "id": "B",
+          "sequence": "NAFTVTVPKDLYVVEYGSNMTIECKFPVEKQLDLAALIVYWEMEDKNIIQFVHGEEDLKVQHSSYRQRARLLKDQLSLGNAALQITDVKLQDAGVYRCMISYGGADYKRITVKVN",
+          "msa": {
+            "query": {
+              "a3m": {
+                "alignment": ">query\nNAFTVTVPKDLYVVEYGSNMTIECKFPVEKQLDLAALIVYWEMEDKNIIQFVHGEEDLKVQHSSYRQRARLLKDQLSLGNAALQITDVKLQDAGVYRCMISYGGADYKRITVKVN",
+                "format": "a3m"
+              }
+            }
+          },
+          "structural_templates": [
+            {
+              "structure": "",
+              "format": "cif",
+              "name": "fixed-pdl1-target",
+              "chain_id": "B"
+            }
+          ]
+        }
+      ],
+      "diffusion_samples": 1,
+      "output_format": "cif"
+    }
+  ]
+}

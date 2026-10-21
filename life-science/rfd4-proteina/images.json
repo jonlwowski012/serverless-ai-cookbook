@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-21",
+  "model": {
+    "tag": "nvcr.io/nim/ipd/rfd4-proteina:1.0.0",
+    "reference": "nvcr.io/nim/ipd/rfd4-proteina@sha256:f4106e6b659aa53979d37c450c0c0cef620dcfce63934ef7e8e1268c5439b49a",
+    "architecture": "linux/amd64",
+    "registry_manifest_verified": true,
+    "mirrored": false,
+    "checkpoint_release": "NVIDIA NIM pre-release pair; differs from RosettaCommons public release",
+    "source": "https://docs.nvidia.com/nim/bionemo/rfd4-proteina/latest/release-notes.html#model-checkpoints"
+  },
+  "bucket_client": {
+    "tag": "alpine/curl:8.19.0",
+    "reference": "alpine/curl@sha256:c103daf2dbf75dbaee86c278f45be6c82acd86eef27e17521d0992bf90031d81",
+    "registry_manifest_verified": true,
+    "mirrored": false
+  },
+  "live_acceptance": "Not performed for either exact vendor-image recipe; see validation.md",
+  "hugging_face_base": {
+    "tag": "nvcr.io/nvidia/pytorch:26.09-py3",
+    "reference": "nvcr.io/nvidia/pytorch@sha256:f71fd67f6d71f685e0bd08ce6c8df48807624cc5d48886370d3471bc4f89d81d",
+    "architecture": "linux/amd64",
+    "registry_manifest_verified": true,
+    "mirrored": false
+  },
+  "hugging_face_model": {
+    "repository": "nvidia/RFD4-Proteina",
+    "revision": "a06e2509c7033b010fc43614e9fd840303588502",
+    "bundle": "Matched public flow model and autoencoder",
+    "package": "rfd4-proteina[all-cuda13]==0.0.2",
+    "model_files": {
+      "config.json": "154ea927ab8005b7eac2d047a792147fb4606ab4878e496aa8414b6b40dad368",
+      "model.safetensors": "5b549dd61adb2f6c6b5cb95bda13f40f5e31556b4e6c755edc0ca6f011c68fb0"
+    },
+    "packages": [
+      "torch==2.14.1",
+      "atomworks[ml,openbabel]==3.0.4",
+      "cuequivariance==0.13.0",
+      "cuequivariance-torch==0.13.0",
+      "cuequivariance-ops-torch-cu13==0.13.0",
+      "cuequivariance-ops-cu13==0.13.0",
+      "rfd4-proteina[all-cuda13]==0.0.2"
+    ]
+  },
+  "optional_openfold3": {
+    "tag": "nvcr.io/nim/openfold/openfold3:1.6.0",
+    "reference": "nvcr.io/nim/openfold/openfold3@sha256:ac982329c9c38c7e6eb865d1bad0d925635912a0d81684da40bd78f9226ff5a3",
+    "architecture": "linux/amd64",
+    "registry_manifest_verified": true,
+    "mirrored": false,
+    "purpose": "Separate sequence-based complex prediction for the PD-L1 workflow",
+    "checkpoint": "NVIDIA NIM shipped checkpoint; distinct runtime from the RFD4 public-release oracle",
+    "inference_seed": 700001,
+    "source": "https://docs.nvidia.com/nim/bionemo/openfold3/1.6.0/configuration-alternatives.html"
+  }
+}
