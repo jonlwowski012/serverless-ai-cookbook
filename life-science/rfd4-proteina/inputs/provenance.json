@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-21",
+  "inputs": [
+    {
+      "file": "nim/monomer.json",
+      "request_sha256": "76e815bab8df959cd915afb68ac3d66292b3faf8dd90fb539236a46dfe1afef6",
+      "embedded_cif_sha256": "695e4b8b1efc258c0460fa22e3a8ed8088e28b4d7e3ad3fbd795561ddc98fbde",
+      "origin": {
+        "repository": "https://github.com/RosettaCommons/RFD4-Proteina",
+        "commit": "afbfd257965c19ba8007b97279d2707b20440fd1",
+        "source_file": "data/benchmarks/monomer/monomer-short.cif.zst"
+      },
+      "changes": "Fixed blank segment length to 150.",
+      "cif_file": "hugging-face/monomer.cif"
+    },
+    {
+      "file": "nim/pdl1.json",
+      "request_sha256": "b7bb43e64a2a30e3bd308ec1b47de53a484122568d601f201ef84d0d315b84fe",
+      "embedded_cif_sha256": "b9c31e3a349678e6b8bdb7e4ba7a1cdc6924d066b7648f20e1cd41cdf1f368d9",
+      "origin": {
+        "repository": "https://github.com/RosettaCommons/RFD4-Proteina",
+        "commit": "afbfd257965c19ba8007b97279d2707b20440fd1",
+        "source_file": "data/benchmarks/ppi/ppi_all_atom/pdl1.cif.zst"
+      },
+      "changes": "Fixed designed segment length to 80; retained target and contact annotations.",
+      "cif_file": "hugging-face/pdl1.cif"
+    },
+    {
+      "file": "nim/heme.json",
+      "request_sha256": "65a331be47389c517b44e222f8eef15b31264d4e2b0304d81957a8b31bee1e7d",
+      "embedded_cif_sha256": "03d1f7e4fdde5a6245f0c3ec5594b4ca45bd23e8fcde217a1c2156aa54ba2c56",
+      "origin": {
+        "repository": "https://github.com/RosettaCommons/RFD4-Proteina",
+        "commit": "afbfd257965c19ba8007b97279d2707b20440fd1",
+        "source_file": "data/benchmarks/small_molecule_binder/disco_figure_2c/heme_b_final_0.cif.zst"
+      },
+      "changes": "Fixed designed segment length to 150 and conditioned the 43 heme atoms by identity and coordinates.",
+      "cif_file": "hugging-face/heme.cif"
+    }
+  ],
+  "pdl1_target_identity": {
+    "uniprot": "Q9NZQ7",
+    "sequence_check": "The fixed 115-residue target is an exact subsequence of human PD-L1, retrieved from UniProt on 2026-10-21."
+  }
+}
