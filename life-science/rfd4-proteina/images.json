@@ -41,5 +41,16 @@
       "cuequivariance-ops-cu13==0.13.0",
       "rfd4-proteina[all-cuda13]==0.0.2"
     ]
+  },
+  "optional_openfold3": {
+    "tag": "nvcr.io/nim/openfold/openfold3:1.6.0",
+    "reference": "nvcr.io/nim/openfold/openfold3@sha256:ac982329c9c38c7e6eb865d1bad0d925635912a0d81684da40bd78f9226ff5a3",
+    "architecture": "linux/amd64",
+    "registry_manifest_verified": true,
+    "mirrored": false,
+    "purpose": "Separate sequence-based complex prediction for the PD-L1 workflow",
+    "checkpoint": "NVIDIA NIM shipped checkpoint; distinct runtime from the RFD4 public-release oracle",
+    "inference_seed": 700001,
+    "source": "https://docs.nvidia.com/nim/bionemo/openfold3/1.6.0/configuration-alternatives.html"
   }
 }

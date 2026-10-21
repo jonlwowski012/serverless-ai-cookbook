@@ -314,6 +314,7 @@ Template code in this repository is Apache-2.0. Some templates deploy third-part
 ### 🧬 RFD4-Proteina
 
 - [Public Hugging Face model](job-rfd4-proteina/README.md) — run a finite GPU job from NVIDIA’s PyTorch image.
+- [PD-L1 binder design](job-pdl1-binder-design/README.md) — generate candidates, then optionally predict the complexes with NVIDIA OpenFold3 NIM.
 
 ### 🎬 Synthetic Data
 

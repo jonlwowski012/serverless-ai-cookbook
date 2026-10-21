@@ -19,10 +19,11 @@ response's `model`, `runtime`, `schedule` and `warnings` fields. A seed does not
 make different models or execution backends equivalent.
 
 NIM's built-in design metrics do not constitute independent refolding or binding
-validation. The Hugging Face example disables optional metrics and returns raw
-proposals. Neither recipe bundles a structure-prediction oracle. NVIDIA documents
-an [external-oracle interface](https://docs.nvidia.com/nim/bionemo/rfd4-proteina/latest/oracle.html)
-for separate evaluation workflows.
+validation. The Hugging Face generation example disables optional metrics.
+The [PD-L1 workflow](pdl1/README.md) adds a separate OpenFold3 NIM prediction,
+templating only the target and retaining all candidates. Its checkpoint and
+complex-level confidence scores differ from the public model's optional oracle
+runtime. Do not transfer thresholds or pass counts between predictors.
 
 A proposed structure does not establish solubility, specificity, binding, metal
 coordination or enzyme activity. These recipes carry no comparative success-rate

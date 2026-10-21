@@ -41,5 +41,14 @@
   "pdl1_target_identity": {
     "uniprot": "Q9NZQ7",
     "sequence_check": "The fixed 115-residue target is an exact subsequence of human PD-L1, retrieved from UniProt on 2026-10-21."
+  },
+  "openfold3": {
+    "target_file": "openfold3/pdl1-target.cif",
+    "target_sha256": "cc97cd7dd6954e7db774b387ff2fd05655cb2b2d45b451a3ccb47a714ad2312b",
+    "source_file": "hugging-face/pdl1.cif",
+    "changes": "Selected the 115-residue target chain B with the public annotated-CIF parse preset; retained all 924 heavy atoms and their coordinates; no designed binder is supplied as a template.",
+    "request_template": "openfold3/pdl1.template.json",
+    "request_template_sha256": "38f3ef2036b6a92c46e472dcda7f2b0128a559ec62dbc5aa5fe0c1ebc9d7242f",
+    "request_format_source": "https://docs.nvidia.com/nim/bionemo/openfold3/1.6.0/example-requests.html"
   }
 }

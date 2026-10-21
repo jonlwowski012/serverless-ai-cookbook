@@ -5,14 +5,16 @@ no mirrored images, model weights, custom Dockerfiles or model-serving wrappers.
 
 Checked without starting new GPU work:
 
-- NVIDIA NIM, NVIDIA PyTorch and Alpine curl image manifests and pinned digests.
+- NVIDIA RFD4/OpenFold3 NIM, NVIDIA PyTorch and Alpine curl image manifests and pinned digests.
 - All three NIM requests against NVIDIA's published OpenAPI schema.
 - Public-package availability and resolution of the pinned Hugging Face
   dependency set with CUDA 13 wheels in an isolated Python 3.12 environment.
+- The materialized PD-L1 OpenFold3 request against NVIDIA's published schema;
+  target sequence, atom coordinates, query MSAs and absence of a binder template.
 - Input provenance, hashes, launch-link parameters and shell syntax.
 
 The exact NIM endpoint, CPU bucket client and Hugging Face startup-installation
-job have **not** had live end-to-end acceptance. Results from earlier custom
+job and optional OpenFold3 path have **not** had live end-to-end acceptance. Results from earlier custom
 images are not presented as validation or benchmarks for these configurations.
 Signed-in console acceptance is also pending; automated console access received
 Cloudflare 403.
