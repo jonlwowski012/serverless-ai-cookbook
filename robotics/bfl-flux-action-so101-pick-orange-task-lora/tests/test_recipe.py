@@ -202,6 +202,38 @@ class RecipeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "expected 3 episode statistics"):
                 prepare_dataset.check_episode_stats(path, 3)
 
+    def test_publication_skips_replaced_last_link_but_not_other_failures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "local"
+            checkpoint = source / "checkpoints/000100/pretrained_model"
+            checkpoint.mkdir(parents=True)
+            (checkpoint / "adapter_model.safetensors").write_bytes(b"adapter")
+            (checkpoint / "adapter_config.json").write_text("{}")
+            last = source / "checkpoints/last"
+            last.symlink_to("000100")
+            target = root / "bucket"
+            readlink = os.readlink
+
+            def replace_link(path):
+                last.unlink()
+                try:
+                    return readlink(path)
+                finally:
+                    last.symlink_to("000100")
+
+            with patch.object(publish.os, "readlink", side_effect=replace_link):
+                self.assertEqual(publish.publish(source, target), [])
+            self.assertFalse(target.exists())
+            with patch.object(publish.os, "readlink", side_effect=PermissionError("denied")):
+                with self.assertRaises(PermissionError):
+                    publish.publish(source, target)
+            with patch.object(publish.shutil, "copyfile", side_effect=FileNotFoundError("source missing")):
+                with self.assertRaises(FileNotFoundError):
+                    publish.publish(source, target)
+            self.assertFalse((target / "checkpoints/000100/COMPLETE.json").exists())
+            self.assertEqual(publish.publish(source, target)[0]["step"], 100)
+
     def test_publication_requires_last_checkpoint_and_hashes_adapter(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

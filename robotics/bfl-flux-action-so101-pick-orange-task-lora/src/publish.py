@@ -26,7 +26,11 @@ def publish(source: Path, destination: Path, calibration_id: str | None = None) 
     last = checkpoints / "last"
     if not last.is_symlink():
         return []
-    latest = os.readlink(last)
+    try:
+        latest = os.readlink(last)
+    except FileNotFoundError:
+        # LeRobot unlinks and recreates this pointer when advancing checkpoints.
+        return []
     if not latest.isdigit():
         raise ValueError(f"unexpected last checkpoint target: {latest}")
     published = []
