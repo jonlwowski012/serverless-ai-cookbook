@@ -20,5 +20,6 @@ ENV PATH="/opt/lerobot/.venv/bin:/opt/tools/bin:${PATH}" \
     HF_LEROBOT_HOME=/workspace/cache/lerobot \
     PYTHONUNBUFFERED=1
 WORKDIR /opt/lerobot
-COPY recipe.json calibration.py prepare_dataset.py publish.py train_job.py policy_service.py /app/recipe/
+COPY configs/ /app/recipe/configs/
+COPY src/*.py /app/recipe/src/
 RUN python -c 'import torch, natten, lerobot; assert torch.__version__.startswith("2.11.")'

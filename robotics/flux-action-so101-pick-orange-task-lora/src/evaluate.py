@@ -83,7 +83,7 @@ import leisaac  # noqa: F401
 
 from calibration import ID as CALIBRATION_ID
 
-RECIPE = json.loads((Path(__file__).parent / "recipe.json").read_text())
+RECIPE = json.loads((Path(__file__).resolve().parent.parent / "configs/recipe.json").read_text())
 ORANGES = [SceneEntityCfg(f"Orange{index:03d}") for index in range(1, 4)]
 PLATE = SceneEntityCfg("Plate")
 

@@ -14,6 +14,15 @@ This demo trains the weights of [FLUX 3 Action base](https://docs.bfl.ai/flux_3/
 
 The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. A separate CPU job reloads the export and scores one reserved dataset window. Earlier Nebius runs completed the four-update smoke, its one-window reload, and a 3,000-update train. The full export has not yet been reloaded independently, and robot task success has not been measured.
 
+## Files
+
+| Path | Purpose |
+| --- | --- |
+| `Dockerfile` | Build the pinned training environment. |
+| `configs/` | Pinned model, dataset, and training settings. |
+| `scripts/job.sh` | Submit smoke, full-training, and export-check jobs. |
+| `src/` | Dataset preparation, training, and export reload. |
+
 ## 1. Configure and build
 
 Install and sign in to the Nebius CLI, Docker, and AWS CLI. Use a project, subnet, bucket, and registry in the same region. Run these commands from this directory:
@@ -39,7 +48,7 @@ If Hugging Face requires a token, set `NEBIUS_HF_TOKEN_SECRET` to its **Nebius M
 
 ```bash
 export RUN_NAME="flux-aloha-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh smoke
+bash scripts/job.sh smoke
 ```
 
 Save the returned job ID. Check the job and its result:
@@ -51,13 +60,13 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
 ```
 
-Expect a `COMPLETED` job and `optimizer_updates: 4` in `TRAIN_COMPLETE.json`. The run prefix also holds the pinned recipe, dataset index, metrics, checkpoint, and export. Use `bash job.sh smoke dry-run` to inspect a submission before sending it.
+Expect a `COMPLETED` job and `optimizer_updates: 4` in `TRAIN_COMPLETE.json`. The run prefix also holds the pinned recipe, dataset index, metrics, checkpoint, and export. Use `bash scripts/job.sh smoke dry-run` to inspect a submission before sending it.
 
 Reload the published export in a separate CPU job:
 
 ```bash
 export CHECK_NAME="smoke-check-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh check
+bash scripts/job.sh check
 nebius ai job get CHECK_JOB_ID --profile "$NEBIUS_PROFILE"
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/checks/$CHECK_NAME/COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
@@ -69,17 +78,24 @@ Expect `COMPLETED`, one scored window, and finite action errors. This is an infe
 
 ```bash
 export RUN_NAME="flux-aloha-full-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh full
+bash scripts/job.sh full
 nebius ai job get FULL_JOB_ID --profile "$NEBIUS_PROFILE"
 nebius ai job logs FULL_JOB_ID --profile "$NEBIUS_PROFILE" --tail 80
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
 export CHECK_NAME="full-check-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh check
+bash scripts/job.sh check
 ```
 
 Expect `optimizer_updates: 3000` and an `export_model_sha256` in the training receipt. The check job writes `checks/$CHECK_NAME/COMPLETE.json`. A full run publishes checkpoints every 500 updates. Use a fresh `RUN_NAME` for every run.
 
 ## Use your own robot
 
-Edit [`recipe.json`](recipe.json) for the dataset revision, robot type, ordered state and action channels, cameras, FPS, and reserved episodes. Edit [`train.json`](train.json) for the action head, camera layout, action horizon, timing, and schedule. Check action units and whether commands are absolute or deltas, both grippers' signs and ranges, camera order, and episode alignment against real recordings. The preparation step rejects mismatched metadata and policy settings. You must also map exported actions back into your robot's command frame and measure task success separately; matching 14 numbers alone is not enough.
+Edit [`configs/recipe.json`](configs/recipe.json) for the dataset revision, robot type, ordered state and action channels, cameras, FPS, and reserved episodes. Edit [`configs/train.json`](configs/train.json) for the action head, camera layout, action horizon, timing, and schedule. Check action units and whether commands are absolute or deltas, both grippers' signs and ranges, camera order, and episode alignment against real recordings. The preparation step rejects mismatched metadata and policy settings. You must also map exported actions back into your robot's command frame and measure task success separately; matching 14 numbers alone is not enough.
+
+## Troubleshooting
+
+- **Model access denied:** accept the model's Hugging Face access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox secret selector before submitting.
+- **Run prefix already exists:** choose a fresh `RUN_NAME`. The runner refuses to overwrite previous artifacts.
+- **Job fails or no completion receipt appears:** inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE"`. Treat a run as complete only when the job completes and its receipt is present.
+- **Export check fails:** inspect the check job logs for a hash or dataset-index mismatch. Use the same pinned inputs and the `RUN_NAME` of a completed training run.

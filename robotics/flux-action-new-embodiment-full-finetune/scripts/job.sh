@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Usage: bash job.sh smoke|full|check [dry-run]
+# Usage: bash scripts/job.sh smoke|full|check [dry-run]
 set -euo pipefail
 
 mode=${1:-}
-case "$mode" in smoke|full|check) ;; *) echo "usage: bash job.sh smoke|full|check [dry-run]" >&2; exit 2 ;; esac
+case "$mode" in smoke|full|check) ;; *) echo "usage: bash scripts/job.sh smoke|full|check [dry-run]" >&2; exit 2 ;; esac
 case ${2:-} in ''|dry-run) ;; *) echo "only dry-run is supported as a second argument" >&2; exit 2 ;; esac
 
 : "${NEBIUS_PROFILE:?set NEBIUS_PROFILE}"
@@ -19,11 +19,11 @@ if [[ $mode == check ]]; then
   [[ $CHECK_NAME =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || { echo "invalid CHECK_NAME" >&2; exit 2; }
   platform=cpu-d3
   preset=32vcpu-128gb
-  entrypoint=/app/cookbook/check_export.py
+  entrypoint=/app/cookbook/src/check_export.py
 else
   platform=gpu-h200-sxm
   preset=1gpu-16vcpu-200gb
-  entrypoint="/app/cookbook/train_job.py $mode"
+  entrypoint="/app/cookbook/src/train_job.py $mode"
 fi
 
 command=(nebius ai job create --profile "$NEBIUS_PROFILE"

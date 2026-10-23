@@ -18,7 +18,7 @@ from lerobot.policies.flux3.configuration_flux3 import Flux3Config
 from calibration import ID as CALIBRATION_ID, to_motor, to_policy
 from publish import verify_adapter
 
-RECIPE = json.loads((Path(__file__).parent / "recipe.json").read_text())
+RECIPE = json.loads((Path(__file__).resolve().parent.parent / "configs/recipe.json").read_text())
 
 
 def load_policy():

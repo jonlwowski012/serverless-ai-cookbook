@@ -8,11 +8,11 @@ import sys
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 
 
 def load(name):
-    spec = importlib.util.spec_from_file_location(name, ROOT / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(name, ROOT / "src" / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -117,7 +117,7 @@ class RecipeTests(unittest.TestCase):
                 self.assertAlmostEqual(converted_stats[key]["mean"][1], mapped[key][1], places=5)
 
     def test_dataset_contract_rejects_wrong_camera_or_joint_order(self):
-        recipe = json.loads((ROOT / "recipe.json").read_text())
+        recipe = json.loads((ROOT / "configs/recipe.json").read_text())
         source = recipe["dataset"]
         features = {
             key: {"dtype": "float32", "shape": [6], "names": prepare_dataset.JOINTS.copy()}

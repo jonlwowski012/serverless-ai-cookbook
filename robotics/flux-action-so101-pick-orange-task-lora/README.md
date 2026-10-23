@@ -14,6 +14,17 @@ This demo trains a **task LoRA** on [BFL's prepared SO-101 policy](https://docs.
 
 The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. An earlier calibrated 100-step Nebius smoke ran end to end, but neither base nor adapter placed an orange in its one evaluation seed. The 60,000-step calibrated run and 25-seed comparison have not completed. Training alone does not establish policy quality.
 
+## Files
+
+| Path | Purpose |
+| --- | --- |
+| `Dockerfile` | Build the pinned training environment. |
+| `configs/` | Pinned model, dataset, and training settings. |
+| `scripts/job.sh` | Submit smoke and full-training jobs. |
+| `src/` | Dataset preparation, training, checkpoint publication, and policy evaluation. |
+| `tests/` | Local checks for calibration, dataset contracts, publication, and quality scoring. |
+| [EVALUATE.md](EVALUATE.md) | Paired base/adapter evaluation on a separate Isaac Sim host. |
+
 ## 1. Configure and build
 
 Install and sign in to the Nebius CLI, Docker, and AWS CLI. Use a project, subnet, bucket, and registry in the same region. Work from this directory:
@@ -40,7 +51,7 @@ If Hugging Face requires a token for the SO-101 weights, set `NEBIUS_HF_TOKEN_SE
 
 ```bash
 export RUN_NAME="flux-orange-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh smoke
+bash scripts/job.sh smoke
 ```
 
 Save the returned job ID. Check the job and its durable result:
@@ -52,14 +63,14 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
 ```
 
-Expect `COMPLETED`, `microsteps: 100`, and an adapter hash in `TRAIN_COMPLETE.json`. Inspect `calibration-report.json` and `camera-preview.jpg` in the same run prefix before a long run. The report flags how far the demonstrations extend beyond the checkpoint's usual joint range. Use `bash job.sh smoke dry-run` to inspect a submission before sending it.
+Expect `COMPLETED`, `microsteps: 100`, and an adapter hash in `TRAIN_COMPLETE.json`. Inspect `calibration-report.json` and `camera-preview.jpg` in the same run prefix before a long run. The report flags how far the demonstrations extend beyond the checkpoint's usual joint range. Use `bash scripts/job.sh smoke dry-run` to inspect a submission before sending it.
 
 ## 3. Train the full adapter
 
 ```bash
 export FULL_STEPS=60000
 export RUN_NAME="flux-orange-full-$(date -u +%Y%m%dT%H%M%SZ)"
-bash job.sh full
+bash scripts/job.sh full
 nebius ai job get FULL_JOB_ID --profile "$NEBIUS_PROFILE"
 nebius ai job logs FULL_JOB_ID --profile "$NEBIUS_PROFILE" --tail 50
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
@@ -71,3 +82,22 @@ Expect a `COMPLETED` job and a `TRAIN_COMPLETE.json` with `microsteps: 60000`. T
 ## 4. Test the policy in Isaac Sim
 
 Follow [EVALUATE.md](EVALUATE.md) on an RTX host with Isaac Sim 5.1 and LeIsaac. It runs the released base and trained adapter on the same 25 Pick Orange seeds, then compares orange placements and full task successes. The H200 training job does not run Isaac Sim. Until that paired evaluation passes, the full run is a published adapter, not a demonstrated improvement.
+
+## Adapt and check locally
+
+Edit [`configs/recipe.json`](configs/recipe.json) to change the pinned inputs. The calibration in [`src/calibration.py`](src/calibration.py) is specific to this dataset and SO-101 policy; verify joint units, signs, ranges, and camera order before substituting recordings. Use the [full fine-tuning example](../flux-action-new-embodiment-full-finetune/README.md) for a different embodiment.
+
+Run the lightweight checks from this directory:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The parquet/safetensors calibration check skips when its optional dependencies are absent locally; those dependencies are included in the training image.
+
+## Troubleshooting
+
+- **Model access denied:** accept the model's Hugging Face access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox secret selector before submitting.
+- **Run prefix already exists:** choose a fresh `RUN_NAME`. The runner refuses to overwrite previous artifacts.
+- **Job fails or no completion receipt appears:** inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE"`. Treat a run as complete only when the job completes and its receipt is present.
+- **Calibration check fails:** inspect the dataset joint convention and calibration report before a longer run. Keep the calibration checks enabled.

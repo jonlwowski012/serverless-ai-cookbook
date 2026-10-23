@@ -28,13 +28,13 @@ docker run --rm --gpus all --ipc host -p 127.0.0.1:8765:8765 \
   -e MODEL_VARIANT=base \
   -v "$EVAL_DIR/model-cache:/workspace/work/models" \
   -v "$EVAL_DIR/hf-cache:/workspace/cache" \
-  "$NEBIUS_IMAGE" python3 /app/recipe/policy_service.py
+  "$NEBIUS_IMAGE" python3 /app/recipe/src/policy_service.py
 ```
 
 In another terminal, activate the LeIsaac/Isaac Sim environment, work from the pinned LeIsaac checkout, and run:
 
 ```bash
-python "$RECIPE_DIR/evaluate.py" --model base \
+python "$RECIPE_DIR/src/evaluate.py" --model base \
   --output "$EVAL_DIR/base.json" --episodes 25 --seed 42000 \
   --episode_length_s 120 --device cuda --enable_cameras --headless
 ```
@@ -49,13 +49,13 @@ docker run --rm --gpus all --ipc host -p 127.0.0.1:8765:8765 \
   -v "$EVAL_DIR/checkpoint:/workspace/checkpoint:ro" \
   -v "$EVAL_DIR/model-cache:/workspace/work/models" \
   -v "$EVAL_DIR/hf-cache:/workspace/cache" \
-  "$NEBIUS_IMAGE" python3 /app/recipe/policy_service.py
+  "$NEBIUS_IMAGE" python3 /app/recipe/src/policy_service.py
 ```
 
 In the LeIsaac terminal, run the same seeds with the adapter:
 
 ```bash
-python "$RECIPE_DIR/evaluate.py" --model adapter \
+python "$RECIPE_DIR/src/evaluate.py" --model adapter \
   --output "$EVAL_DIR/adapter.json" --episodes 25 --seed 42000 \
   --episode_length_s 120 --device cuda --enable_cameras --headless
 ```
@@ -65,7 +65,7 @@ The service checks the published adapter hash. The evaluator saves JSON reports 
 ## Compare results
 
 ```bash
-python3 "$RECIPE_DIR/summarize.py" "$EVAL_DIR/base.json" "$EVAL_DIR/adapter.json" \
+python3 "$RECIPE_DIR/src/summarize.py" "$EVAL_DIR/base.json" "$EVAL_DIR/adapter.json" \
   "$EVAL_DIR/quality.json"
 ```
 

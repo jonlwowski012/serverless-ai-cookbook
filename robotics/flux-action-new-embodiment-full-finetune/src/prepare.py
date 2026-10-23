@@ -26,7 +26,7 @@ def prepare(mode: str) -> Path:
     result.mkdir(parents=True, exist_ok=False)
     WORK.mkdir(parents=True, exist_ok=True)
 
-    recipe = json.loads((HERE / "recipe.json").read_text())
+    recipe = json.loads((HERE.parent / "configs/recipe.json").read_text())
     contract = recipe["dataset"]
     source = WORK / "source"
     snapshot_download(
@@ -51,7 +51,7 @@ def prepare(mode: str) -> Path:
         if info["features"][feature]["dtype"] != "video":
             raise ValueError(f"dataset camera is not a video: {feature}")
 
-    config = json.loads((HERE / "train.json").read_text())
+    config = json.loads((HERE.parent / "configs/train.json").read_text())
     policy = config["policy"]
     if (policy["action_dim"] != len(names) or policy["fps"] != contract["fps"]
             or policy["camera_keys"] != [f"images.{key}" for key in contract["cameras"]]

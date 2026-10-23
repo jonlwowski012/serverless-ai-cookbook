@@ -86,7 +86,7 @@ def main() -> None:
     prepare(mode)
     subprocess.run([
         "torchrun", "--standalone", "--nnodes=1", "--nproc-per-node=1",
-        "/app/cookbook/train_job.py", "worker",
+        "/app/cookbook/src/train_job.py", "worker",
     ], check=True)
 
 

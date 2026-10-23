@@ -16,7 +16,7 @@ from prepare_dataset import prepare
 from publish import publish
 
 HERE = Path(__file__).resolve().parent
-RECIPE = json.loads((HERE / "recipe.json").read_text())
+RECIPE = json.loads((HERE.parent / "configs/recipe.json").read_text())
 
 
 def now() -> str:

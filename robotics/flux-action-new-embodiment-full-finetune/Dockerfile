@@ -15,4 +15,5 @@ RUN uv sync --no-cache --locked --no-dev --extra encoders --extra data \
     && uv pip install --no-cache --no-deps --python .venv/bin/python \
       'natten==0.21.6+torch2100cu128' -f https://whl.natten.org/
 
-COPY recipe.json train.json prepare.py train_job.py check_export.py /app/cookbook/
+COPY configs/ /app/cookbook/configs/
+COPY src/*.py /app/cookbook/src/

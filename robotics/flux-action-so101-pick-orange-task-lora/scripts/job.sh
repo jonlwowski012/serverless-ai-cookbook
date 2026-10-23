@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Usage: bash job.sh smoke|full [dry-run]
+# Usage: bash scripts/job.sh smoke|full [dry-run]
 set -euo pipefail
 
 run_mode=${1:-}
-case "$run_mode" in smoke|full) ;; *) echo "usage: bash job.sh smoke|full [dry-run]" >&2; exit 2 ;; esac
+case "$run_mode" in smoke|full) ;; *) echo "usage: bash scripts/job.sh smoke|full [dry-run]" >&2; exit 2 ;; esac
 case ${2:-} in ''|dry-run) ;; *) echo "only dry-run is supported as a second argument" >&2; exit 2 ;; esac
 
 : "${NEBIUS_PROFILE:?set NEBIUS_PROFILE}"
@@ -27,7 +27,7 @@ command=(nebius ai job create --profile "$NEBIUS_PROFILE"
   --name "flux-so101-orange-$run_mode-$(date -u +%Y%m%dT%H%M%SZ)"
   --image "$NEBIUS_IMAGE" --platform "$platform" --preset "$preset"
   --volume "$NEBIUS_BUCKET_ID:/workspace/data:rw" --disk-size 200Gi
-  --timeout 72h --container-command python3 --args /app/recipe/train_job.py
+  --timeout 72h --container-command python3 --args /app/recipe/src/train_job.py
   --env "RUN_MODE=$run_mode" --env "RUN_NAME=$RUN_NAME"
   --env "IMAGE_REF=$NEBIUS_IMAGE"
   --env PYTHONUNBUFFERED=1)

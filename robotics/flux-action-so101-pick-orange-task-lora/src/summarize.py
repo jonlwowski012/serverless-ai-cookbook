@@ -5,7 +5,7 @@ import json
 import random
 from pathlib import Path
 
-RECIPE = json.loads((Path(__file__).parent / "recipe.json").read_text())
+RECIPE = json.loads((Path(__file__).resolve().parent.parent / "configs/recipe.json").read_text())
 
 
 def summarize(base: dict, adapter: dict) -> dict:
