@@ -21,7 +21,6 @@ def load(name):
 prepare_dataset = load("prepare_dataset")
 calibration = load("calibration")
 publish = load("publish")
-summarize = load("summarize")
 train_job = load("train_job")
 
 
@@ -33,6 +32,21 @@ class RecipeTests(unittest.TestCase):
         with patch.dict(os.environ, {"FULL_STEPS": "60001"}):
             with self.assertRaisesRegex(SystemExit, "multiple of 5000"):
                 train_job.training_steps("full")
+
+    def test_full_training_disables_policy_evaluation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            result = work / "result"
+            result.mkdir()
+            with patch.dict(os.environ, {"RUN_NAME": "test-run"}, clear=True), \
+                    patch.object(train_job.subprocess, "Popen") as process, \
+                    patch.object(train_job, "publish", return_value=[{"step": 60000}]):
+                process.return_value.stdout = iter(["training\n"])
+                process.return_value.wait.return_value = 0
+                train_job.train(work, result, work / "policy", work / "encoders", 60000)
+            command = json.loads((result / "command.json").read_text())
+            self.assertIn("--steps=60000", command)
+            self.assertIn("--eval_steps=0", command)
 
     def test_wandb_flags_enable_metrics_without_exposing_api_key(self):
         with patch.dict(os.environ, {"WANDB_API_KEY": "test-key", "WANDB_PROJECT": "test-project",
@@ -187,39 +201,6 @@ class RecipeTests(unittest.TestCase):
                 publish.verify_adapter(published / "pretrained_model_ema", records[0])
             with self.assertRaisesRegex(ValueError, "calibration differs"):
                 publish.publish(root / "local", target, calibration.ID)
-
-    def test_quality_gate_uses_paired_episodes(self):
-        common = {
-            "task": "LeIsaac-SO101-PickOrange-v0",
-            "dataset_revision": "pin", "calibration_id": calibration.ID, "leisaac_revision": "pin",
-            "seed_start": 42, "episode_length_s": 120, "control_hz": 30,
-            "physics_hz": 60, "physics_steps_per_action": 1,
-        }
-        base = {
-            **common, "model": "base",
-            "episodes": [{"seed": 42 + i, "oranges_placed": 0, "placed": [False] * 3,
-                          "full_task_success": False} for i in range(25)],
-        }
-        adapter = {
-            **common, "model": "adapter",
-            "episodes": [{"seed": 42 + i, "oranges_placed": 1, "placed": [True, False, False],
-                          "full_task_success": False} for i in range(25)],
-        }
-        report = summarize.summarize(base, adapter)
-        self.assertEqual(report["adapter_oranges_placed"], 25)
-        self.assertTrue(report["quality_pass"])
-        adapter["episodes"][0]["seed"] = 999
-        with self.assertRaisesRegex(ValueError, "seeds"):
-            summarize.summarize(base, adapter)
-        adapter["episodes"][0]["seed"] = 42
-        adapter["physics_steps_per_action"] = 2
-        with self.assertRaisesRegex(ValueError, "physics_steps_per_action"):
-            summarize.summarize(base, adapter)
-        adapter["physics_steps_per_action"] = 1
-        adapter["calibration_id"] = "wrong"
-        with self.assertRaisesRegex(ValueError, "calibration_id"):
-            summarize.summarize(base, adapter)
-
 
 if __name__ == "__main__":
     unittest.main()

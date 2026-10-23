@@ -26,7 +26,7 @@ class JobTests(unittest.TestCase):
                    "NEBIUS_PROFILE": "test-profile", "NEBIUS_PROJECT_ID": "test-project",
                    "NEBIUS_SUBNET_ID": "test-subnet", "NEBIUS_BUCKET_ID": "test-bucket",
                    "NEBIUS_IMAGE": "test-image", "RUN_NAME": "test-run",
-                   "CHECK_NAME": "test-check", "FULL_STEPS": "60000"}
+                   "FULL_STEPS": "60000"}
             for mode in MODES:
                 for dry_run in (False, True):
                     with self.subTest(mode=mode, dry_run=dry_run):
@@ -46,9 +46,13 @@ class JobTests(unittest.TestCase):
                             self.assertIn(f'--name "{name}"', result.stdout)
                             self.assertIn("nebius ai job logs JOB_ID", result.stdout)
                             self.assertIn("runs/test-run/", result.stdout)
-                            receipt = ("checks/test-check/COMPLETE.json" if mode == "check"
-                                       else "TRAIN_COMPLETE.json")
-                            self.assertIn(receipt, result.stdout)
+                            self.assertIn("TRAIN_COMPLETE.json", result.stdout)
+            removed = subprocess.run(
+                ["bash", str(ROOT / "scripts/job.sh"), "check"],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(removed.returncode, 2)
+            self.assertNotIn("Submitted:", removed.stdout)
             failed = subprocess.run(
                 ["bash", str(ROOT / "scripts/job.sh"), "smoke"],
                 env={**env, "STUB_EXIT": "7"}, capture_output=True, text=True,

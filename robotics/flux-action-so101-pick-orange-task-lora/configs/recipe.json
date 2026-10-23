@@ -17,13 +17,5 @@
     "revision": "62878e2925e59b7a89ec14463ce89932624c490d"
   },
   "lerobot_revision": "1bc0bdfb20ad4f4f76dc8a68a0e0746d54f50de9",
-  "leisaac_revision": "24d3bcd",
-  "task": "LeIsaac-SO101-PickOrange-v0",
-  "instruction": "Grab orange and place into plate",
-  "published_act_reference": {
-    "model": "wsagi/ACT-PickOrange",
-    "oranges_placed": 33,
-    "oranges_possible": 75,
-    "episodes": 25
-  }
+  "instruction": "Grab orange and place into plate"
 }

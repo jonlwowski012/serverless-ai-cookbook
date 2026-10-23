@@ -3,8 +3,8 @@ title: Train a FLUX 3 Action SO-101 Pick Orange task LoRA
 category: robotics
 type: batch-job
 runtime: nebius-ai-jobs
-frameworks: [pytorch, lerobot, isaac-sim]
-keywords: [robotics, flux-action, so101, lora, benchmark]
+frameworks: [pytorch, lerobot]
+keywords: [robotics, flux-action, so101, lora, training]
 difficulty: advanced
 ---
 
@@ -12,13 +12,13 @@ difficulty: advanced
 
 This demo trains a **task LoRA** on [BFL's prepared SO-101 policy](https://docs.bfl.ai/flux_3/flux3_action_so101). It uses one Nebius GPU Job and 60 demonstrations from [LeIsaac Pick Orange](https://huggingface.co/datasets/LightwheelAI/leisaac-pick-orange) (Apache 2.0). The model uses the [FLUX Kommunity License](https://huggingface.co/black-forest-labs/flux-3-action-so101). To train full weights for a different robot, use the [new embodiment demo](../flux-action-new-embodiment-full-finetune/README.md).
 
-The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. An earlier calibrated 100-step Nebius smoke ran end to end, but neither base nor adapter placed an orange in its one evaluation seed. The 60,000-step calibrated run and 25-seed comparison have not completed. Training alone does not establish policy quality.
+The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. Preparation and training run inside the Serverless job; no local GPU or simulator is required. An earlier calibrated 100-step Nebius smoke completed preparation, training, and checkpoint publication. The calibrated 60,000-step run remains unverified. This cookbook ends with a published adapter; it does not measure robot task success.
 
 ## Workflow
 
-[![SO-101 workflow: pinned Pick Orange data and model settings feed one GPU LoRA job. Object Storage holds adapters and hashes. A separate RTX host compares the released base and trained adapter over 25 matching Isaac Sim seeds, then scores placements and paired gain.](assets/workflow.png)](assets/workflow.png)
+[![SO-101 training workflow: pinned Pick Orange data and model settings feed one Serverless GPU job for dataset preparation, joint calibration, and LoRA training. Object Storage holds complete adapter checkpoints, hashes, and the training receipt.](assets/workflow.png)](assets/workflow.png)
 
-[Editable SVG](assets/workflow.svg). The dashed lime path is manual iteration with a fresh run name; it does not resume an interrupted job.
+[Editable SVG](assets/workflow.svg). All data preparation and training run in the Serverless GPU job.
 
 ## Requirements and compute
 
@@ -29,9 +29,8 @@ The demo downloads pinned data and model revisions, converts LeIsaac's joint val
 | Stage | Resources | Work |
 | --- | --- | --- |
 | Training | Default: one H200, `1gpu-16vcpu-200gb`, 200 GiB scratch disk | Smoke: 100 microsteps; documented full run: 60,000. |
-| Evaluation | Separate Linux RTX host with Isaac Sim 5.1, LeIsaac, and the policy-service container | 25 seeds each for base and adapter; H200 does not run Isaac Sim. |
 
-Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 72-hour job timeout is a ceiling, not an estimated duration. The training receipt records `train_seconds` for training and publication; it excludes data preparation and model downloads. The simulator's 120-second episode limit is simulated time, not a wall-clock estimate.
+Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 72-hour job timeout is a ceiling, not an estimated duration. The training receipt records `train_seconds` for training and publication; it excludes data preparation and model downloads.
 
 ## Files
 
@@ -41,9 +40,8 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | `assets/` | Workflow diagram in PNG and editable SVG formats. |
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke and full-training jobs. |
-| `src/` | Dataset preparation, training, checkpoint publication, and policy evaluation. |
-| `tests/` | Local checks for calibration, dataset contracts, publication, and quality scoring. |
-| [EVALUATE.md](EVALUATE.md) | Paired base/adapter evaluation on a separate Isaac Sim host. |
+| `src/` | Dataset preparation, joint calibration, training, and checkpoint publication. |
+| `tests/` | Local checks for job submission, calibration, dataset contracts, and publication. |
 
 ## 1. Configure and build
 
@@ -99,10 +97,6 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
 
 Expect a `COMPLETED` job and a `TRAIN_COMPLETE.json` with `microsteps: 60000`. The receipt names the final checkpoint; its `COMPLETE.json` records hashes for the raw and EMA adapters. Intermediate checkpoints are published every 5,000 microsteps. Use a fresh `RUN_NAME` for every run. If you choose `NEBIUS_PREEMPTIBLE=1`, completed checkpoints remain in Object Storage after interruption, but this demo does not automatically resume.
 
-## 4. Test the policy in Isaac Sim
-
-Follow [EVALUATE.md](EVALUATE.md) on an RTX host with Isaac Sim 5.1 and LeIsaac. It runs the released base and trained adapter on the same 25 Pick Orange seeds, then compares orange placements and full task successes. The H200 training job does not run Isaac Sim. Until that paired evaluation passes, the full run is a published adapter, not a demonstrated improvement.
-
 ## Adapt and check locally
 
 Edit [`configs/recipe.json`](configs/recipe.json) to change the pinned inputs. The calibration in [`src/calibration.py`](src/calibration.py) is specific to this dataset and SO-101 policy; verify joint units, signs, ranges, and camera order before substituting recordings. Use the [full fine-tuning example](../flux-action-new-embodiment-full-finetune/README.md) for a different embodiment.
@@ -121,7 +115,7 @@ Dataset preparation and training use local `/workspace/work` storage so video re
 
 A background watcher checks for complete checkpoints every 30 seconds and copies them to the bucket. For the documented 60,000-microstep run, checkpoints are saved every 5,000 microsteps. Publication records adapter hashes in `COMPLETE.json`; `TRAIN_COMPLETE.json` is written only after the requested final checkpoint is published. A completed checkpoint may survive an interrupted job even when the training receipt is absent.
 
-`selected_checkpoint` in the receipt means **the final checkpoint**, not the best-performing checkpoint. The runner does not rank intermediate checkpoints. If you compare checkpoints, select using separate validation seeds and reserve the documented 25 paired seeds for the final base/adapter comparison.
+`selected_checkpoint` in the receipt identifies **the final checkpoint**. The runner does not rank checkpoints or run policy evaluation; `quality_evaluation: "not_run"` makes that limit explicit in the receipt.
 
 Preemptible execution is opt-in with `NEBIUS_PREEMPTIBLE=1` and disables automatic restart. There is no resume path: after interruption, inspect published checkpoints, then use a fresh `RUN_NAME` for a new training run. Reusing a run name is rejected to prevent overwrites.
 

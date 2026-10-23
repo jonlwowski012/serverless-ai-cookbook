@@ -12,13 +12,13 @@ difficulty: advanced
 
 This demo trains the weights of [FLUX 3 Action base](https://docs.bfl.ai/flux_3/flux3_action_finetuning) and a new 14-action ALOHA head on **one Nebius H200**. It uses [ALOHA Static Cups Open](https://huggingface.co/datasets/lerobot/aloha_static_cups_open), a small MIT-licensed dataset. The model has its own [license](https://huggingface.co/black-forest-labs/flux-3-action-base) and requires access on Hugging Face. For a task LoRA on BFL's prepared SO-101 policy, use the [SO-101 demo](../flux-action-so101-pick-orange-task-lora/README.md).
 
-The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. A separate CPU job reloads the export and scores one reserved dataset window. Earlier Nebius runs completed the four-update smoke, its one-window reload, and a 3,000-update train. The full export has not yet been reloaded independently, and robot task success has not been measured.
+The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. Preparation and training run inside the Serverless GPU job. Earlier Nebius runs completed the four-update smoke and a 3,000-update train. The full export has not been reloaded independently, and robot task success has not been measured. This cookbook ends with the published weights and training receipt.
 
 ## Workflow
 
-[![ALOHA workflow: pinned dataset and embodiment settings feed one H200 full-weight training job. Object Storage holds checkpoints and a BF16 export. An independent CPU job reloads the export, checks hashes and dataset lineage, and records finite action errors for one held-out window.](assets/workflow.png)](assets/workflow.png)
+[![ALOHA training workflow: pinned dataset and embodiment settings feed one H200 Serverless job for dataset preparation and full-weight training. Object Storage holds complete checkpoints, a BF16 export, its SHA-256, and the training receipt.](assets/workflow.png)](assets/workflow.png)
 
-[Editable SVG](assets/workflow.svg). The dashed lime path is manual iteration with a fresh run name; it does not resume an interrupted job.
+[Editable SVG](assets/workflow.svg). All data preparation and training run in the Serverless GPU job.
 
 ## Requirements and compute
 
@@ -29,9 +29,8 @@ The demo downloads pinned model and dataset revisions, trains four updates as a 
 | Stage | Resources | Work |
 | --- | --- | --- |
 | Training | One H200, `1gpu-16vcpu-200gb`, 300 GiB scratch disk | Smoke: four optimizer updates; full run: 3,000. |
-| Export check | CPU, `32vcpu-128gb`, 300 GiB scratch disk | Download the pinned dataset again, reload the export, and score one held-out window. |
 
-Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 168-hour job timeout is a ceiling, not an estimated duration. Account for model/data downloads and export publication as well as training; the CPU check is a separate billed job.
+Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 168-hour job timeout is a ceiling, not an estimated duration. Account for model/data downloads and export publication as well as training.
 
 ## Files
 
@@ -40,8 +39,8 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | `Dockerfile` | Build the pinned training environment. |
 | `assets/` | Workflow diagram in PNG and editable SVG formats. |
 | `configs/` | Pinned model, dataset, and training settings. |
-| `scripts/job.sh` | Submit smoke, full-training, and export-check jobs. |
-| `src/` | Dataset preparation, training, and export reload. |
+| `scripts/job.sh` | Submit smoke and full-training jobs. |
+| `src/` | Dataset preparation, full-weight training, and export publication. |
 | `tests/` | Local job-helper checks using a stub CLI; no cloud submission. |
 
 ## 1. Configure and build
@@ -83,18 +82,6 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
 
 Expect a `COMPLETED` job and `optimizer_updates: 4` in `TRAIN_COMPLETE.json`. The run prefix also holds the pinned recipe, dataset index, metrics, checkpoint, and export. Use `bash scripts/job.sh smoke dry-run` to inspect a submission before sending it.
 
-Reload the published export in a separate CPU job:
-
-```bash
-export CHECK_NAME="smoke-check-$(date -u +%Y%m%dT%H%M%SZ)"
-bash scripts/job.sh check
-nebius ai job get CHECK_JOB_ID --profile "$NEBIUS_PROFILE"
-aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/checks/$CHECK_NAME/COMPLETE.json" - \
-  --endpoint-url "$NEBIUS_S3_ENDPOINT"
-```
-
-Expect `COMPLETED`, one scored window, and finite action errors. This is an inference check, not a quality benchmark.
-
 ## 3. Train the full example
 
 ```bash
@@ -104,11 +91,9 @@ nebius ai job get FULL_JOB_ID --profile "$NEBIUS_PROFILE"
 nebius ai job logs FULL_JOB_ID --profile "$NEBIUS_PROFILE" --tail 80
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
-export CHECK_NAME="full-check-$(date -u +%Y%m%dT%H%M%SZ)"
-bash scripts/job.sh check
 ```
 
-Expect `optimizer_updates: 3000` and an `export_model_sha256` in the training receipt. The check job writes `checks/$CHECK_NAME/COMPLETE.json`. A full run publishes checkpoints every 500 updates. Use a fresh `RUN_NAME` for every run.
+Expect `optimizer_updates: 3000` and an `export_model_sha256` in the training receipt. A full run publishes checkpoints every 500 updates. Use a fresh `RUN_NAME` for every run.
 
 ## Use your own robot
 
@@ -126,9 +111,9 @@ python3 -m unittest discover -s tests -v
 
 Dataset preparation and training use local `/workspace/work` storage so video reads and training writes do not depend on the Object Storage mount. The bucket is mounted at `/workspace/data` for durable artifacts. Scratch disks and job timeouts are configured in `scripts/job.sh`; the defaults provide working room but are not measured minimums.
 
-The trainer saves a complete checkpoint every 500 updates in a full run and publishes it before continuing; the four-update smoke publishes its final checkpoint. Publication copies the trainer's completion marker last. After training, the runner exports BF16 weights, records their SHA-256, and writes `TRAIN_COMPLETE.json`. The independent check verifies that hash and the rebuilt dataset index before writing its own completion receipt.
+The trainer saves a complete checkpoint every 500 updates in a full run and publishes it before continuing; the four-update smoke publishes its final checkpoint. Publication copies the trainer's completion marker last. After training, the runner exports BF16 weights, records their SHA-256, and writes `TRAIN_COMPLETE.json`.
 
-The exported policy comes from the final checkpoint; intermediate checkpoints are not ranked by quality. The one-window CPU check verifies reload and finite predictions, not task success. Neither this example nor its job helper implements automatic resume. After interruption, inspect the bucket for completed checkpoints and use a fresh `RUN_NAME` for a new run.
+The exported policy comes from the final checkpoint; intermediate checkpoints are not ranked by quality. The runner does not reload the export or measure policy quality; the receipt records `quality_evaluation: "not_run"`. Neither this example nor its job helper implements automatic resume. After interruption, inspect the bucket for completed checkpoints and use a fresh `RUN_NAME` for a new run.
 
 ## Troubleshooting
 
@@ -142,4 +127,3 @@ Replace `JOB_ID` in the commands below with the ID returned by submission or the
 | Interrupted job or timeout | Inspect job state and logs, then list `runs/$RUN_NAME/` in the bucket. Completed checkpoints can remain; a new training run starts from scratch under a fresh name. Increasing a timeout does not enable resume. |
 | Run prefix already exists | Choose a fresh `RUN_NAME`; do not delete previous results just to reuse the name. |
 | No `TRAIN_COMPLETE.json` | Inspect job state and logs. Individual checkpoints do not prove the requested training run finished; require both a completed job and its training receipt. |
-| Export check fails or its receipt is absent | Inspect the check job logs for hash or dataset-index mismatches. Use a completed training run's `RUN_NAME`, the same pinned inputs, and a fresh `CHECK_NAME`; do not bypass the integrity checks. |

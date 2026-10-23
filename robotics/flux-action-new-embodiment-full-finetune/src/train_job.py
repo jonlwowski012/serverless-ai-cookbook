@@ -73,7 +73,7 @@ def worker() -> None:
         "status": "trained", "run_name": run_name, "optimizer_updates": config.steps,
         "checkpoint": f"checkpoints/{checkpoint.name}",
         "export": "export", "export_model_sha256": model_hash,
-        "quality_evaluation": "pending",
+        "quality_evaluation": "not_run",
     }
     (result / "TRAIN_COMPLETE.json").write_text(json.dumps(receipt, indent=2) + "\n")
 

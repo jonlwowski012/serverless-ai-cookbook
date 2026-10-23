@@ -87,7 +87,6 @@ def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) ->
         checkpoint_frequency = 500
     else:
         checkpoint_frequency = 5000
-    evaluation_steps = steps if steps >= 10_000 else 0
     command = [
         sys.executable, "-m", "lerobot.scripts.lerobot_train",
         "--config_path=/opt/lerobot/examples/flux3/lora.json",
@@ -102,7 +101,7 @@ def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) ->
         '--rename_map={"observation.images.front":"observation.images.scene"}',
         f"--steps={steps}",
         f"--save_freq={checkpoint_frequency}",
-        f"--eval_steps={evaluation_steps}",
+        "--eval_steps=0",
         f"--output_dir={output}",
         *wandb_options(os.environ["RUN_NAME"]),
     ]
@@ -190,7 +189,7 @@ def main() -> None:
         "calibration_report": overlap,
         "checkpoints": published,
         "selected_checkpoint": selected_checkpoint,
-        "quality_evaluation": "pending",
+        "quality_evaluation": "not_run",
     })
     (result / "TRAIN_COMPLETE.json").write_text(json.dumps(record, indent=2) + "\n")
 
