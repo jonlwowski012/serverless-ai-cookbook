@@ -16,7 +16,9 @@ The demo downloads pinned data and model revisions, converts LeIsaac's joint val
 
 ## Workflow
 
-Pinned Pick Orange data → joint calibration → GPU LoRA training → Object Storage checkpoints → paired Isaac Sim evaluation.
+[![SO-101 workflow: pinned Pick Orange data and model settings feed one GPU LoRA job. Object Storage holds adapters and hashes. A separate RTX host compares the released base and trained adapter over 25 matching Isaac Sim seeds, then scores placements and paired gain.](assets/workflow.png)](assets/workflow.png)
+
+[Editable SVG](assets/workflow.svg). The dashed lime path is manual iteration with a fresh run name; it does not resume an interrupted job.
 
 ## Requirements and compute
 
@@ -36,6 +38,7 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | Path | Purpose |
 | --- | --- |
 | `Dockerfile` | Build the pinned training environment. |
+| `assets/` | Workflow diagram in PNG and editable SVG formats. |
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke and full-training jobs. |
 | `src/` | Dataset preparation, training, checkpoint publication, and policy evaluation. |

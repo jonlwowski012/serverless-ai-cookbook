@@ -16,7 +16,9 @@ The demo downloads pinned model and dataset revisions, trains four updates as a 
 
 ## Workflow
 
-Pinned ALOHA data → embodiment checks and dataset index → GPU full fine-tuning → Object Storage export → independent CPU reload.
+[![ALOHA workflow: pinned dataset and embodiment settings feed one H200 full-weight training job. Object Storage holds checkpoints and a BF16 export. An independent CPU job reloads the export, checks hashes and dataset lineage, and records finite action errors for one held-out window.](assets/workflow.png)](assets/workflow.png)
+
+[Editable SVG](assets/workflow.svg). The dashed lime path is manual iteration with a fresh run name; it does not resume an interrupted job.
 
 ## Requirements and compute
 
@@ -36,6 +38,7 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | Path | Purpose |
 | --- | --- |
 | `Dockerfile` | Build the pinned training environment. |
+| `assets/` | Workflow diagram in PNG and editable SVG formats. |
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke, full-training, and export-check jobs. |
 | `src/` | Dataset preparation, training, and export reload. |
