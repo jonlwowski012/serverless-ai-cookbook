@@ -1,24 +1,34 @@
 ---
-title: Train a FLUX 3 Action SO-101 Pick Orange task LoRA
+title: Train a Black Forest Labs FLUX 3 Action SO-101 Pick Orange task LoRA
 category: robotics
 type: batch-job
 runtime: nebius-ai-jobs
 frameworks: [pytorch, lerobot]
-keywords: [robotics, flux-action, so101, lora, training]
+keywords: [robotics, black-forest-labs, flux-action, so101, lora, training]
 difficulty: advanced
 ---
 
-# Train a FLUX 3 Action SO-101 Pick Orange task LoRA
+<p align="center">
+  <a href="https://bfl.ai"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/black-forest-labs-white.svg">
+    <img src="assets/black-forest-labs-black.svg" alt="Black Forest Labs" height="48">
+  </picture></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://nebius.com"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/nebius-white.svg">
+    <img src="assets/nebius-black.svg" alt="Nebius" height="48">
+  </picture></a>
+</p>
 
-This demo trains a **task LoRA** on [BFL's prepared SO-101 policy](https://docs.bfl.ai/flux_3/flux3_action_so101). It uses one Nebius GPU Job and 60 demonstrations from [LeIsaac Pick Orange](https://huggingface.co/datasets/LightwheelAI/leisaac-pick-orange) (Apache 2.0). The model uses the [FLUX Kommunity License](https://huggingface.co/black-forest-labs/flux-3-action-so101). To train full weights for a different robot, use the [new embodiment demo](../flux-action-new-embodiment-full-finetune/README.md).
+# Train a Black Forest Labs FLUX 3 Action SO-101 Pick Orange task LoRA
+
+This demo trains a **task LoRA** on [Black Forest Labs' prepared SO-101 policy](https://docs.bfl.ai/flux_3/flux3_action_so101). It uses one Nebius GPU Job and 60 demonstrations from [LeIsaac Pick Orange](https://huggingface.co/datasets/LightwheelAI/leisaac-pick-orange) (Apache 2.0). The model uses the [FLUX Kommunity License](https://huggingface.co/black-forest-labs/flux-3-action-so101). To train full weights for a different robot, use the [new embodiment demo](../bfl-flux-action-new-embodiment-full-finetune/README.md).
 
 The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. Preparation and training run inside the Serverless job; no local GPU or simulator is required. An earlier calibrated 100-step Nebius smoke completed preparation, training, and checkpoint publication. The calibrated 60,000-step run remains unverified. This cookbook ends with a published adapter; it does not measure robot task success.
 
 ## Workflow
 
 [![SO-101 training workflow: pinned Pick Orange data and model settings feed one Serverless GPU job for dataset preparation, joint calibration, and LoRA training. Object Storage holds complete adapter checkpoints, hashes, and the training receipt.](assets/workflow.png)](assets/workflow.png)
-
-[Editable SVG](assets/workflow.svg). All data preparation and training run in the Serverless GPU job.
 
 ## Requirements and compute
 
@@ -37,7 +47,7 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | Path | Purpose |
 | --- | --- |
 | `Dockerfile` | Build the pinned training environment. |
-| `assets/` | Workflow diagram in PNG and editable SVG formats. |
+| `assets/` | Workflow diagram, official logos, and logo source URLs. |
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke and full-training jobs. |
 | `src/` | Dataset preparation, joint calibration, training, and checkpoint publication. |
@@ -99,7 +109,7 @@ Expect a `COMPLETED` job and a `TRAIN_COMPLETE.json` with `microsteps: 60000`. T
 
 ## Adapt and check locally
 
-Edit [`configs/recipe.json`](configs/recipe.json) to change the pinned inputs. The calibration in [`src/calibration.py`](src/calibration.py) is specific to this dataset and SO-101 policy; verify joint units, signs, ranges, and camera order before substituting recordings. Use the [full fine-tuning example](../flux-action-new-embodiment-full-finetune/README.md) for a different embodiment.
+Edit [`configs/recipe.json`](configs/recipe.json) to change the pinned inputs. The calibration in [`src/calibration.py`](src/calibration.py) is specific to this dataset and SO-101 policy; verify joint units, signs, ranges, and camera order before substituting recordings. Use the [full fine-tuning example](../bfl-flux-action-new-embodiment-full-finetune/README.md) for a different embodiment.
 
 Run the lightweight checks from this directory:
 
@@ -113,7 +123,7 @@ The parquet/safetensors calibration check skips when its optional dependencies a
 
 Dataset preparation and training use local `/workspace/work` storage so video reads and training writes do not depend on the Object Storage mount. The bucket is mounted at `/workspace/data` for durable artifacts. Scratch disks and job timeouts are configured in `scripts/job.sh`; the defaults provide working room but are not measured minimums.
 
-A background watcher checks for complete checkpoints every 30 seconds and copies them to the bucket. For the documented 60,000-microstep run, checkpoints are saved every 5,000 microsteps. Publication records adapter hashes in `COMPLETE.json`; `TRAIN_COMPLETE.json` is written only after the requested final checkpoint is published. A completed checkpoint may survive an interrupted job even when the training receipt is absent.
+A background watcher checks for complete checkpoints every 30 seconds and copies them to the bucket. If publication fails, the runner stops the training process group and fails the job, preserving any checkpoints already published. For the documented 60,000-microstep run, checkpoints are saved every 5,000 microsteps. Publication records adapter hashes in `COMPLETE.json`; `TRAIN_COMPLETE.json` is written only after the requested final checkpoint is published. A completed checkpoint may survive an interrupted job even when the training receipt is absent.
 
 `selected_checkpoint` in the receipt identifies **the final checkpoint**. The runner does not rank checkpoints or run policy evaluation; `quality_evaluation: "not_run"` makes that limit explicit in the receipt.
 

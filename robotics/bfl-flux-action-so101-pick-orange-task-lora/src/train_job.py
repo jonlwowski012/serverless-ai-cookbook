@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -117,23 +118,38 @@ def train(work: Path, result: Path, policy: Path, encoders: Path, steps: int) ->
                 publish(output, result, CALIBRATION_ID)
             except Exception as error:
                 errors.append(error)
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        process.wait(timeout=30)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
                 return
 
-    watcher = threading.Thread(target=watch, daemon=True)
-    watcher.start()
     log_path = work / "train.log"
     try:
         with log_path.open("w") as log:
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            assert process.stdout is not None
-            for line in process.stdout:
-                sys.stdout.write(line)
-                log.write(line)
-                log.flush()
-            status = process.wait()
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                start_new_session=True,
+            )
+            watcher = threading.Thread(target=watch, daemon=True)
+            watcher.start()
+            try:
+                assert process.stdout is not None
+                for line in process.stdout:
+                    sys.stdout.write(line)
+                    log.write(line)
+                    log.flush()
+                status = process.wait()
+            finally:
+                stop.set()
+                watcher.join()
+                if process.stdout is not None:
+                    process.stdout.close()
     finally:
-        stop.set()
-        watcher.join()
         if log_path.is_file():
             shutil.copyfile(log_path, result / "train.log")
     if errors:

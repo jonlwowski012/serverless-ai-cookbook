@@ -21,16 +21,6 @@ def adapter_hash(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def verify_adapter(path: Path, record: dict) -> str:
-    key = ADAPTER_HASH_KEYS.get(path.name)
-    if key is None or key not in record:
-        raise ValueError(f"no published checksum for adapter checkpoint: {path}")
-    actual = adapter_hash(path)
-    if actual != record[key]:
-        raise ValueError("published adapter checksum mismatch")
-    return actual
-
-
 def publish(source: Path, destination: Path, calibration_id: str | None = None) -> list[dict]:
     checkpoints = source / "checkpoints"
     last = checkpoints / "last"

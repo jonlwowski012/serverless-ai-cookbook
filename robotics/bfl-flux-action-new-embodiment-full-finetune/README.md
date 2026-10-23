@@ -1,24 +1,34 @@
 ---
-title: Full fine-tune FLUX 3 Action for a new robot embodiment
+title: Full fine-tune Black Forest Labs FLUX 3 Action for a new robot embodiment
 category: robotics
 type: batch-job
 runtime: nebius-ai-jobs
 frameworks: [pytorch, lerobot]
-keywords: [robotics, flux-action, full-finetune, new-embodiment, aloha]
+keywords: [robotics, black-forest-labs, flux-action, full-finetune, new-embodiment, aloha]
 difficulty: advanced
 ---
 
-# Full fine-tune FLUX 3 Action for a new robot embodiment
+<p align="center">
+  <a href="https://bfl.ai"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/black-forest-labs-white.svg">
+    <img src="assets/black-forest-labs-black.svg" alt="Black Forest Labs" height="48">
+  </picture></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://nebius.com"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/nebius-white.svg">
+    <img src="assets/nebius-black.svg" alt="Nebius" height="48">
+  </picture></a>
+</p>
 
-This demo trains the weights of [FLUX 3 Action base](https://docs.bfl.ai/flux_3/flux3_action_finetuning) and a new 14-action ALOHA head on **one Nebius H200**. It uses [ALOHA Static Cups Open](https://huggingface.co/datasets/lerobot/aloha_static_cups_open), a small MIT-licensed dataset. The model has its own [license](https://huggingface.co/black-forest-labs/flux-3-action-base) and requires access on Hugging Face. For a task LoRA on BFL's prepared SO-101 policy, use the [SO-101 demo](../flux-action-so101-pick-orange-task-lora/README.md).
+# Full fine-tune Black Forest Labs FLUX 3 Action for a new robot embodiment
+
+This demo trains the weights of [Black Forest Labs FLUX 3 Action base](https://docs.bfl.ai/flux_3/flux3_action_finetuning) and a new 14-action ALOHA head on **one Nebius H200**. It uses [ALOHA Static Cups Open](https://huggingface.co/datasets/lerobot/aloha_static_cups_open), a small MIT-licensed dataset. The model has its own [license](https://huggingface.co/black-forest-labs/flux-3-action-base) and requires access on Hugging Face. For a task LoRA on Black Forest Labs' prepared SO-101 policy, use the [SO-101 demo](../bfl-flux-action-so101-pick-orange-task-lora/README.md).
 
 The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. Preparation and training run inside the Serverless GPU job. Earlier Nebius runs completed the four-update smoke and a 3,000-update train. The full export has not been reloaded independently, and robot task success has not been measured. This cookbook ends with the published weights and training receipt.
 
 ## Workflow
 
 [![ALOHA training workflow: pinned dataset and embodiment settings feed one H200 Serverless job for dataset preparation and full-weight training. Object Storage holds complete checkpoints, a BF16 export, its SHA-256, and the training receipt.](assets/workflow.png)](assets/workflow.png)
-
-[Editable SVG](assets/workflow.svg). All data preparation and training run in the Serverless GPU job.
 
 ## Requirements and compute
 
@@ -37,11 +47,11 @@ Wall-clock runtime, download size, and peak scratch usage have not been benchmar
 | Path | Purpose |
 | --- | --- |
 | `Dockerfile` | Build the pinned training environment. |
-| `assets/` | Workflow diagram in PNG and editable SVG formats. |
+| `assets/` | Workflow diagram, official logos, and logo source URLs. |
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke and full-training jobs. |
 | `src/` | Dataset preparation, full-weight training, and export publication. |
-| `tests/` | Local job-helper checks using a stub CLI; no cloud submission. |
+| `tests/` | Local job-helper and artifact-publication checks; no cloud submission. |
 
 ## 1. Configure and build
 
@@ -101,7 +111,7 @@ Edit [`configs/recipe.json`](configs/recipe.json) for the dataset revision, robo
 
 ## Check locally
 
-Run the job-helper checks without contacting Nebius:
+Run the local submission and publication checks without contacting Nebius:
 
 ```bash
 python3 -m unittest discover -s tests -v

@@ -1,4 +1,6 @@
 import importlib.util
+import hashlib
+import io
 import json
 import os
 import tempfile
@@ -41,12 +43,45 @@ class RecipeTests(unittest.TestCase):
             with patch.dict(os.environ, {"RUN_NAME": "test-run"}, clear=True), \
                     patch.object(train_job.subprocess, "Popen") as process, \
                     patch.object(train_job, "publish", return_value=[{"step": 60000}]):
-                process.return_value.stdout = iter(["training\n"])
+                process.return_value.stdout = io.StringIO("training\n")
                 process.return_value.wait.return_value = 0
                 train_job.train(work, result, work / "policy", work / "encoders", 60000)
             command = json.loads((result / "command.json").read_text())
             self.assertIn("--steps=60000", command)
             self.assertIn("--eval_steps=0", command)
+
+    def test_publication_failure_stops_training_before_it_finishes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            result = work / "result"
+            result.mkdir()
+            process = unittest.mock.MagicMock()
+            process.pid = 12345
+            terminated = []
+            def output():
+                self.assertEqual(terminated, [12345])
+                yield "trainer stopped\n"
+            process.stdout = output()
+            process.wait.return_value = -15
+            def thread(*, target, **kwargs):
+                watcher = unittest.mock.MagicMock()
+                watcher.start.side_effect = target
+                return watcher
+            event = unittest.mock.MagicMock()
+            event.wait.return_value = False
+            with patch.dict(os.environ, {"RUN_NAME": "test-run"}, clear=True), \
+                    patch.object(train_job.threading, "Event", return_value=event), \
+                    patch.object(train_job.threading, "Thread", side_effect=thread), \
+                    patch.object(train_job.subprocess, "Popen", return_value=process) as spawn, \
+                    patch.object(train_job.os, "killpg", side_effect=lambda pid, sig: terminated.append(pid)), \
+                    patch.object(train_job, "publish", side_effect=OSError("storage unavailable")) as publisher:
+                with self.assertRaisesRegex(RuntimeError, "publication failed"):
+                    train_job.train(work, result, work / "policy", work / "encoders", 60000)
+            self.assertTrue(spawn.call_args.kwargs["start_new_session"])
+            self.assertEqual(terminated, [12345])
+            process.wait.assert_any_call(timeout=30)
+            self.assertEqual(publisher.call_count, 1)
+            self.assertFalse((result / "TRAIN_COMPLETE.json").exists())
 
     def test_wandb_flags_enable_metrics_without_exposing_api_key(self):
         with patch.dict(os.environ, {"WANDB_API_KEY": "test-key", "WANDB_PROJECT": "test-project",
@@ -186,19 +221,9 @@ class RecipeTests(unittest.TestCase):
             self.assertEqual(records[0]["directory"], "000100")
             marker = target / "checkpoints/000100/COMPLETE.json"
             self.assertTrue(marker.is_file())
-            published = target / "checkpoints/000100"
-            self.assertEqual(publish.verify_adapter(published / "pretrained_model", records[0]),
-                             records[0]["adapter_sha256"])
-            self.assertEqual(publish.verify_adapter(published / "pretrained_model_ema", records[0]),
-                             records[0]["ema_adapter_sha256"])
-            self.assertNotEqual(records[0]["adapter_sha256"], records[0]["ema_adapter_sha256"])
+            self.assertEqual(records[0]["adapter_sha256"], hashlib.sha256(b"adapter").hexdigest())
+            self.assertEqual(records[0]["ema_adapter_sha256"], hashlib.sha256(b"ema-adapter").hexdigest())
             self.assertEqual(publish.publish(root / "local", target), records)
-            with self.assertRaisesRegex(ValueError, "no published checksum"):
-                publish.verify_adapter(published / "pretrained_model_ema",
-                                       {"adapter_sha256": records[0]["adapter_sha256"]})
-            (published / "pretrained_model_ema/adapter_model.safetensors").write_bytes(b"changed")
-            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
-                publish.verify_adapter(published / "pretrained_model_ema", records[0])
             with self.assertRaisesRegex(ValueError, "calibration differs"):
                 publish.publish(root / "local", target, calibration.ID)
 
