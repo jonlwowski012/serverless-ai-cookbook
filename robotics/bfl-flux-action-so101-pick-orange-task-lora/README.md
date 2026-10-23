@@ -24,7 +24,7 @@ difficulty: advanced
 
 This demo trains a **task LoRA** on [Black Forest Labs' prepared SO-101 policy](https://docs.bfl.ai/flux_3/flux3_action_so101). It uses one Nebius GPU Job and 60 demonstrations from [LeIsaac Pick Orange](https://huggingface.co/datasets/LightwheelAI/leisaac-pick-orange) (Apache 2.0). The model uses the [FLUX Kommunity License](https://huggingface.co/black-forest-labs/flux-3-action-so101). To train full weights for a different robot, use the [new embodiment demo](../bfl-flux-action-new-embodiment-full-finetune/README.md).
 
-The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. Preparation and training run inside the Serverless job; no local GPU or simulator is required. An earlier calibrated 100-step Nebius smoke completed preparation, training, and checkpoint publication. The calibrated 60,000-step run remains unverified. This cookbook ends with a published adapter; it does not measure robot task success.
+The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. Preparation and training run inside the Serverless job; no local GPU or simulator is required. A calibrated 100-microstep Nebius smoke on 2026-10-23 completed preparation, 25 optimizer updates, and checkpoint publication; independent Object Storage readback verified both raw and EMA adapter hashes. The calibrated 60,000-step run remains unverified. This cookbook ends with a published adapter; it does not measure robot task success.
 
 ## Workflow
 
@@ -68,7 +68,7 @@ export NEBIUS_REGION=YOUR_REGION
 export NEBIUS_GPU_PLATFORM=gpu-h200-sxm
 export NEBIUS_S3_ENDPOINT="https://storage.$NEBIUS_REGION.nebius.cloud"
 export AWS_PROFILE=YOUR_OBJECT_STORAGE_PROFILE
-export NEBIUS_IMAGE="cr.$NEBIUS_REGION.nebius.cloud/${NEBIUS_REGISTRY_ID#registry-}/flux-so101-orange:$(date -u +%Y%m%dT%H%M%SZ)"
+export NEBIUS_IMAGE="cr.$NEBIUS_REGION.nebius.cloud/${NEBIUS_REGISTRY_ID#registry-}/bfl-s:$(date -u +%m%d%H%M%S)"
 docker build --platform linux/amd64 -t "$NEBIUS_IMAGE" .
 docker push "$NEBIUS_IMAGE"
 ```
@@ -135,6 +135,7 @@ Replace `JOB_ID` in the commands below with the ID returned by submission or the
 
 | Symptom | Diagnose and recover |
 | --- | --- |
+| Image label exceeds 64 characters | Use a short repository name and tag as above. If validation reports a `metadata.labels` length error, keep the complete image reference at most 64 characters. Long tags and full digest references exceed the limit in the current CLI/API path. |
 | Model access denied | Inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE" --tail 80`. Accept the model access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox selector before a new submission. |
 | Pending job or capacity error such as `NotEnoughResources` | Inspect `nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"` for scheduling details. Check the selected GPU quota and capacity in your region before retrying; a pending job is not evidence that training started. |
 | `No space left on device` | Inspect the job logs for the failing path. Increase `--disk-size` in `scripts/job.sh` if scratch storage is exhausted, then submit a fresh run. |
