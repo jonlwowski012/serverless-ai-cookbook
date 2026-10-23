@@ -14,6 +14,23 @@ This demo trains a **task LoRA** on [BFL's prepared SO-101 policy](https://docs.
 
 The demo downloads pinned data and model revisions, converts LeIsaac's joint values into the model's SO-101 frame, trains 100 microsteps for a smoke test or 60,000 for the example full run, and publishes adapters to Nebius Object Storage. An earlier calibrated 100-step Nebius smoke ran end to end, but neither base nor adapter placed an orange in its one evaluation seed. The 60,000-step calibrated run and 25-seed comparison have not completed. Training alone does not establish policy quality.
 
+## Workflow
+
+Pinned Pick Orange data → joint calibration → GPU LoRA training → Object Storage checkpoints → paired Isaac Sim evaluation.
+
+## Requirements and compute
+
+- Local tools: authenticated Nebius CLI, Docker with Linux AMD64 build support, and AWS CLI configured for Object Storage. Python 3.10+ runs the lightweight local tests.
+- A Nebius project, subnet, Object Storage bucket, container registry, and quota for the resources below. Keep the resources in the same region.
+- Hugging Face model access: accept the linked model's access terms where required, and supply the token through `NEBIUS_HF_TOKEN_SECRET`.
+
+| Stage | Resources | Work |
+| --- | --- | --- |
+| Training | Default: one H200, `1gpu-16vcpu-200gb`, 200 GiB scratch disk | Smoke: 100 microsteps; documented full run: 60,000. |
+| Evaluation | Separate Linux RTX host with Isaac Sim 5.1, LeIsaac, and the policy-service container | 25 seeds each for base and adapter; H200 does not run Isaac Sim. |
+
+Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 72-hour job timeout is a ceiling, not an estimated duration. The training receipt records `train_seconds` for training and publication; it excludes data preparation and model downloads. The simulator's 120-second episode limit is simulated time, not a wall-clock estimate.
+
 ## Files
 
 | Path | Purpose |
@@ -27,7 +44,7 @@ The demo downloads pinned data and model revisions, converts LeIsaac's joint val
 
 ## 1. Configure and build
 
-Install and sign in to the Nebius CLI, Docker, and AWS CLI. Use a project, subnet, bucket, and registry in the same region. Work from this directory:
+Run the following commands from this example directory:
 
 ```bash
 export NEBIUS_PROFILE=YOUR_PROFILE
@@ -54,7 +71,7 @@ export RUN_NAME="flux-orange-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/job.sh smoke
 ```
 
-Save the returned job ID. Check the job and its durable result:
+After submission, the helper prints the run name, artifact prefix, completion receipt, and commands to find and monitor the job. Save the returned job ID. Check the job and its durable result:
 
 ```bash
 nebius ai job get SMOKE_JOB_ID --profile "$NEBIUS_PROFILE"
@@ -77,7 +94,7 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" - \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
 ```
 
-Expect a `COMPLETED` job and a `TRAIN_COMPLETE.json` with `microsteps: 60000`. The receipt names the selected checkpoint; its `COMPLETE.json` records hashes for the raw and EMA adapters. Intermediate checkpoints are published every 5,000 microsteps. Use a fresh `RUN_NAME` for every run. If you choose `NEBIUS_PREEMPTIBLE=1`, completed checkpoints remain in Object Storage after interruption, but this demo does not automatically resume.
+Expect a `COMPLETED` job and a `TRAIN_COMPLETE.json` with `microsteps: 60000`. The receipt names the final checkpoint; its `COMPLETE.json` records hashes for the raw and EMA adapters. Intermediate checkpoints are published every 5,000 microsteps. Use a fresh `RUN_NAME` for every run. If you choose `NEBIUS_PREEMPTIBLE=1`, completed checkpoints remain in Object Storage after interruption, but this demo does not automatically resume.
 
 ## 4. Test the policy in Isaac Sim
 
@@ -95,9 +112,26 @@ python3 -m unittest discover -s tests -v
 
 The parquet/safetensors calibration check skips when its optional dependencies are absent locally; those dependencies are included in the training image.
 
+## Storage, checkpoints, and interruption
+
+Dataset preparation and training use local `/workspace/work` storage so video reads and training writes do not depend on the Object Storage mount. The bucket is mounted at `/workspace/data` for durable artifacts. Scratch disks and job timeouts are configured in `scripts/job.sh`; the defaults provide working room but are not measured minimums.
+
+A background watcher checks for complete checkpoints every 30 seconds and copies them to the bucket. For the documented 60,000-microstep run, checkpoints are saved every 5,000 microsteps. Publication records adapter hashes in `COMPLETE.json`; `TRAIN_COMPLETE.json` is written only after the requested final checkpoint is published. A completed checkpoint may survive an interrupted job even when the training receipt is absent.
+
+`selected_checkpoint` in the receipt means **the final checkpoint**, not the best-performing checkpoint. The runner does not rank intermediate checkpoints. If you compare checkpoints, select using separate validation seeds and reserve the documented 25 paired seeds for the final base/adapter comparison.
+
+Preemptible execution is opt-in with `NEBIUS_PREEMPTIBLE=1` and disables automatic restart. There is no resume path: after interruption, inspect published checkpoints, then use a fresh `RUN_NAME` for a new training run. Reusing a run name is rejected to prevent overwrites.
+
 ## Troubleshooting
 
-- **Model access denied:** accept the model's Hugging Face access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox secret selector before submitting.
-- **Run prefix already exists:** choose a fresh `RUN_NAME`. The runner refuses to overwrite previous artifacts.
-- **Job fails or no completion receipt appears:** inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE"`. Treat a run as complete only when the job completes and its receipt is present.
-- **Calibration check fails:** inspect the dataset joint convention and calibration report before a longer run. Keep the calibration checks enabled.
+Replace `JOB_ID` in the commands below with the ID returned by submission or the printed name lookup.
+
+| Symptom | Diagnose and recover |
+| --- | --- |
+| Model access denied | Inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE" --tail 80`. Accept the model access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox selector before a new submission. |
+| Pending job or capacity error such as `NotEnoughResources` | Inspect `nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"` for scheduling details. Check the selected GPU quota and capacity in your region before retrying; a pending job is not evidence that training started. |
+| `No space left on device` | Inspect the job logs for the failing path. Increase `--disk-size` in `scripts/job.sh` if scratch storage is exhausted, then submit a fresh run. |
+| Interrupted job or timeout | Inspect job state and logs, then list `runs/$RUN_NAME/` in the bucket. Completed checkpoints can remain; a new training run starts from scratch under a fresh name. Increasing a timeout does not enable resume. |
+| Run prefix already exists | Choose a fresh `RUN_NAME`; do not delete previous results just to reuse the name. |
+| No `TRAIN_COMPLETE.json` | Inspect job state and logs. Individual checkpoints do not prove the requested training run finished; require both a completed job and its training receipt. |
+| Calibration check fails | Inspect `calibration-report.json` if written, and the job logs. Verify joint units, signs, ranges, and camera order against `src/calibration.py` and the pinned dataset before retrying. Keep the calibration checks enabled. |

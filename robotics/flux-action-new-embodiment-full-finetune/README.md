@@ -14,6 +14,23 @@ This demo trains the weights of [FLUX 3 Action base](https://docs.bfl.ai/flux_3/
 
 The demo downloads pinned model and dataset revisions, trains four updates as a smoke test or 3,000 updates as a full run, and saves checkpoints and a BF16 export to Nebius Object Storage. A separate CPU job reloads the export and scores one reserved dataset window. Earlier Nebius runs completed the four-update smoke, its one-window reload, and a 3,000-update train. The full export has not yet been reloaded independently, and robot task success has not been measured.
 
+## Workflow
+
+Pinned ALOHA data → embodiment checks and dataset index → GPU full fine-tuning → Object Storage export → independent CPU reload.
+
+## Requirements and compute
+
+- Local tools: authenticated Nebius CLI, Docker with Linux AMD64 build support, and AWS CLI configured for Object Storage. No local GPU is required.
+- A Nebius project, subnet, Object Storage bucket, container registry, and quota for the resources below. Keep the resources in the same region.
+- Hugging Face model access: accept the linked model's access terms where required, and supply the token through `NEBIUS_HF_TOKEN_SECRET`.
+
+| Stage | Resources | Work |
+| --- | --- | --- |
+| Training | One H200, `1gpu-16vcpu-200gb`, 300 GiB scratch disk | Smoke: four optimizer updates; full run: 3,000. |
+| Export check | CPU, `32vcpu-128gb`, 300 GiB scratch disk | Download the pinned dataset again, reload the export, and score one held-out window. |
+
+Wall-clock runtime, download size, and peak scratch usage have not been benchmarked for the current image. The 168-hour job timeout is a ceiling, not an estimated duration. Account for model/data downloads and export publication as well as training; the CPU check is a separate billed job.
+
 ## Files
 
 | Path | Purpose |
@@ -22,10 +39,11 @@ The demo downloads pinned model and dataset revisions, trains four updates as a 
 | `configs/` | Pinned model, dataset, and training settings. |
 | `scripts/job.sh` | Submit smoke, full-training, and export-check jobs. |
 | `src/` | Dataset preparation, training, and export reload. |
+| `tests/` | Local job-helper checks using a stub CLI; no cloud submission. |
 
 ## 1. Configure and build
 
-Install and sign in to the Nebius CLI, Docker, and AWS CLI. Use a project, subnet, bucket, and registry in the same region. Run these commands from this directory:
+Run the following commands from this example directory:
 
 ```bash
 export NEBIUS_PROFILE=YOUR_PROFILE
@@ -51,7 +69,7 @@ export RUN_NAME="flux-aloha-smoke-$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/job.sh smoke
 ```
 
-Save the returned job ID. Check the job and its result:
+After submission, the helper prints the run name, artifact prefix, completion receipt, and commands to find and monitor the job. Save the returned job ID. Check the job and its result:
 
 ```bash
 nebius ai job get SMOKE_JOB_ID --profile "$NEBIUS_PROFILE"
@@ -93,9 +111,32 @@ Expect `optimizer_updates: 3000` and an `export_model_sha256` in the training re
 
 Edit [`configs/recipe.json`](configs/recipe.json) for the dataset revision, robot type, ordered state and action channels, cameras, FPS, and reserved episodes. Edit [`configs/train.json`](configs/train.json) for the action head, camera layout, action horizon, timing, and schedule. Check action units and whether commands are absolute or deltas, both grippers' signs and ranges, camera order, and episode alignment against real recordings. The preparation step rejects mismatched metadata and policy settings. You must also map exported actions back into your robot's command frame and measure task success separately; matching 14 numbers alone is not enough.
 
+## Check locally
+
+Run the job-helper checks without contacting Nebius:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+## Storage, checkpoints, and interruption
+
+Dataset preparation and training use local `/workspace/work` storage so video reads and training writes do not depend on the Object Storage mount. The bucket is mounted at `/workspace/data` for durable artifacts. Scratch disks and job timeouts are configured in `scripts/job.sh`; the defaults provide working room but are not measured minimums.
+
+The trainer saves a complete checkpoint every 500 updates in a full run and publishes it before continuing; the four-update smoke publishes its final checkpoint. Publication copies the trainer's completion marker last. After training, the runner exports BF16 weights, records their SHA-256, and writes `TRAIN_COMPLETE.json`. The independent check verifies that hash and the rebuilt dataset index before writing its own completion receipt.
+
+The exported policy comes from the final checkpoint; intermediate checkpoints are not ranked by quality. The one-window CPU check verifies reload and finite predictions, not task success. Neither this example nor its job helper implements automatic resume. After interruption, inspect the bucket for completed checkpoints and use a fresh `RUN_NAME` for a new run.
+
 ## Troubleshooting
 
-- **Model access denied:** accept the model's Hugging Face access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox secret selector before submitting.
-- **Run prefix already exists:** choose a fresh `RUN_NAME`. The runner refuses to overwrite previous artifacts.
-- **Job fails or no completion receipt appears:** inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE"`. Treat a run as complete only when the job completes and its receipt is present.
-- **Export check fails:** inspect the check job logs for a hash or dataset-index mismatch. Use the same pinned inputs and the `RUN_NAME` of a completed training run.
+Replace `JOB_ID` in the commands below with the ID returned by submission or the printed name lookup.
+
+| Symptom | Diagnose and recover |
+| --- | --- |
+| Model access denied | Inspect `nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE" --tail 80`. Accept the model access terms and set `NEBIUS_HF_TOKEN_SECRET` to a MysteryBox selector before a new submission. |
+| Pending job or capacity error such as `NotEnoughResources` | Inspect `nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"` for scheduling details. Check the selected GPU quota and capacity in your region before retrying; a pending job is not evidence that training started. |
+| `No space left on device` | Inspect the job logs for the failing path. Increase `--disk-size` in `scripts/job.sh` if scratch storage is exhausted, then submit a fresh run. |
+| Interrupted job or timeout | Inspect job state and logs, then list `runs/$RUN_NAME/` in the bucket. Completed checkpoints can remain; a new training run starts from scratch under a fresh name. Increasing a timeout does not enable resume. |
+| Run prefix already exists | Choose a fresh `RUN_NAME`; do not delete previous results just to reuse the name. |
+| No `TRAIN_COMPLETE.json` | Inspect job state and logs. Individual checkpoints do not prove the requested training run finished; require both a completed job and its training receipt. |
+| Export check fails or its receipt is absent | Inspect the check job logs for hash or dataset-index mismatches. Use a completed training run's `RUN_NAME`, the same pinned inputs, and a fresh `CHECK_NAME`; do not bypass the integrity checks. |

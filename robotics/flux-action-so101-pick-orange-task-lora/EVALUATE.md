@@ -9,7 +9,7 @@ git checkout --detach 24d3bcd
 git submodule update --init --recursive
 ```
 
-Copy this cookbook directory to the evaluation host. Set the same `NEBIUS_IMAGE`, bucket, region endpoint, and AWS profile used for training. Set `HF_TOKEN` if the SO-101 model requires it. Read `selected_checkpoint` from `TRAIN_COMPLETE.json`; in `checkpoints/060000/pretrained_model`, the step directory is `060000`. Download that checkpoint, including `COMPLETE.json`:
+Copy this cookbook directory to the evaluation host. Set the same `NEBIUS_IMAGE`, bucket, region endpoint, and AWS profile used for training. Set `HF_TOKEN` if the SO-101 model requires it. Read `selected_checkpoint` from `TRAIN_COMPLETE.json` (the final training checkpoint, not a quality-ranked winner); in `checkpoints/060000/pretrained_model`, the step directory is `060000`. Download that checkpoint, including `COMPLETE.json`:
 
 ```bash
 export RECIPE_DIR=/ABSOLUTE/PATH/TO/flux-action-so101-pick-orange-task-lora
@@ -70,3 +70,5 @@ python3 "$RECIPE_DIR/src/summarize.py" "$EVAL_DIR/base.json" "$EVAL_DIR/adapter.
 ```
 
 `quality.json` reports oranges placed out of 75, full task successes, and paired improvement over the base. The recipe's quality gate is at least **25/75 placements**, at least **10 more placements than base**, and a paired bootstrap interval above zero. If it fails, the adapter is trained but has not shown the intended quality.
+
+If you evaluate intermediate checkpoints to choose a candidate, use separate validation seeds. Keep the 25 paired seeds above for the final comparison so checkpoint selection does not influence the reported test result.

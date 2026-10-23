@@ -22,9 +22,11 @@ case "$platform" in
   *) echo "unsupported NEBIUS_GPU_PLATFORM: $platform" >&2; exit 2 ;;
 esac
 
+job_name="flux-so101-orange-$run_mode-$(date -u +%Y%m%dT%H%M%SZ)"
+
 command=(nebius ai job create --profile "$NEBIUS_PROFILE"
   --parent-id "$NEBIUS_PROJECT_ID" --subnet-id "$NEBIUS_SUBNET_ID"
-  --name "flux-so101-orange-$run_mode-$(date -u +%Y%m%dT%H%M%SZ)"
+  --name "$job_name"
   --image "$NEBIUS_IMAGE" --platform "$platform" --preset "$preset"
   --volume "$NEBIUS_BUCKET_ID:/workspace/data:rw" --disk-size 200Gi
   --timeout 72h --container-command python3 --args /app/recipe/src/train_job.py
@@ -60,4 +62,17 @@ if [[ ${2:-} == dry-run ]]; then
   "${command[@]}" --dry-run
 else
   "${command[@]}" --async
+  cat <<EOF
+
+Submitted: $job_name
+Run: $RUN_NAME
+Artifacts: runs/$RUN_NAME/ (bucket ID: $NEBIUS_BUCKET_ID)
+Completion receipt: runs/$RUN_NAME/TRAIN_COMPLETE.json
+
+Find the job ID:
+  nebius ai job get-by-name --name "$job_name" --parent-id "$NEBIUS_PROJECT_ID" --profile "$NEBIUS_PROFILE"
+Monitor (replace JOB_ID with the returned ID):
+  nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"
+  nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE" --tail 80
+EOF
 fi
