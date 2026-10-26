@@ -145,12 +145,15 @@ Expect a `COMPLETED` job and `optimizer_updates: 4` in `TRAIN_COMPLETE.json`. Th
 
 ## Verify your result
 
-First require the cloud job to report `COMPLETED`; the artifact checker does not query job state. Download into a fresh directory named after this run. Use the same steps for smoke and full runs:
+First require the cloud job to report `COMPLETED`; the artifact checker does not query job state. The block stops on the first error and refuses an existing local results directory. To repeat a download, move the previous local results directory aside first, keeping the cloud `RUN_NAME` unchanged. Use the same steps for smoke and full runs:
 
 ```bash
+(
+set -euo pipefail
 nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"
 export RESULTS_DIR="results/$RUN_NAME"
-mkdir -p "$RESULTS_DIR"
+mkdir -p results
+mkdir "$RESULTS_DIR"
 # The export is about 13.9 GB; the optimizer checkpoint is not downloaded.
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" "$RESULTS_DIR/" \
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
@@ -161,6 +164,7 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/$CHECKPOINT/COMPLETE" "$RESULTS_DI
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/export/" "$RESULTS_DIR/export/" \
   --recursive --endpoint-url "$NEBIUS_S3_ENDPOINT"
 python3 scripts/verify.py "$RESULTS_DIR"
+)
 ```
 
 A successful check prints the independently computed SHA-256 values and a final `PASS:` line. A missing marker or changed weight file exits nonzero. Hash verification establishes artifact integrity; it does not reload the policy or measure robot task success.
