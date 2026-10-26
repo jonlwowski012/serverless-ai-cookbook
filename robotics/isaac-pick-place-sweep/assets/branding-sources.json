@@ -1,0 +1,16 @@
+{
+  "nebius": {
+    "page": "https://nebius.com/media-kit",
+    "archive": "https://assets.nebius.com/assets/2dd2ad13-45c1-4429-a47c-156bedd4d71d/NEBIUS-logos%2807.25%29%20%281%29.zip?cache-buster=2025-08-27T11%3A29%3A04.907Z",
+    "files": [
+      "SVGs/NEBIUS-outline-black.svg",
+      "SVGs/NEBIUS-outline-white.svg"
+    ]
+  },
+  "nvidia": {
+    "page": "https://www.nvidia.com/en-us/about-nvidia/legal-info/logo-brand-usage/",
+    "asset": "https://www.nvidia.com/content/nvidiaGDC/us/en_US/about-nvidia/legal-info/logo-brand-usage/_jcr_content/root/responsivegrid/nv_container_392921705/nv_container_412055486/nv_image.coreimg.svg/1776076920317/nvidia-logo-horz.svg",
+    "variant": "Official horizontal NVIDIA logo"
+  },
+  "modifications": "Source logos are unchanged; nvidia-display.svg places the unchanged official artwork on white, cropping only the source artboard whitespace and adding clear space for both themes."
+}
