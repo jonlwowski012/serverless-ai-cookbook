@@ -1,6 +1,6 @@
 {
   "verified": true,
-  "status": "verified_nebius_digest_pinned_pick_place",
+  "status": "verified_nebius_style_aligned_pick_place",
   "prior_verified_ros_policy_record": "historical_records.validation-ros-1fps.json",
   "attempts": [
     {
@@ -360,6 +360,89 @@
         "The first image, ur3:1016pin1, rebuilt dependency layers but could not be published: Docker upload stalled and a chunked layer finalization returned HTTP 500. No cloud run was submitted for that image",
         "This run validates the pinned-base configuration with cached packages, not the freshly reinstalled dependency versions from the failed publication attempt"
       ]
+    },
+    {
+      "job_id": "aijob-e00cjnv40g2jjhw662",
+      "run_id": "pick-style-20261026T180439Z",
+      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1026style",
+      "digest": "sha256:58648bbd75434879912eeb5cd164da74b08f243ddf8e3f25795c79ddbee7068e",
+      "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
+      "tested_source_commit": "1e9f594195176aea6db2fcce748ab29faa5ea1e3",
+      "state": "COMPLETED",
+      "started_at": "2026-10-26T18:12:30.203133454Z",
+      "finished_at": "2026-10-26T18:14:27.523789863Z",
+      "container_runtime_seconds": 117.320656409,
+      "vm_removed": true,
+      "compute_instance_id": "computeinstance-e00z4kepc3kfqrgnkh",
+      "result": {
+        "success": true,
+        "requested_seconds": 180.0,
+        "renderer": {
+          "device": "NVIDIA L40S/PCIe/SSE2",
+          "vendor": "NVIDIA Corporation",
+          "api": "OpenGLCore"
+        },
+        "model_sha256": "e2d30b0c3477023f1a4728b5e4485583c2d9d2ed01f98f594b8a003965f7351a",
+        "policy_observations": 529,
+        "applied_commands": 528,
+        "ros_message_counts": {
+          "/camera/image/compressed": 266,
+          "/cube_ground_truth": 529,
+          "/goal": 528,
+          "/gripper_command": 529,
+          "/gripper_contacts": 529,
+          "/joint_commands": 529,
+          "/joint_states": 529,
+          "/task_phase": 529,
+          "/tool_pose": 529,
+          "/tool_position": 529
+        },
+        "cube_lift_height_m": 0.26604926586151123,
+        "cube_displacement_m": 0.5389323907808923,
+        "placement_error_m": 0.023011158024449006,
+        "camera_localization_error_m": 0.0010466093429959762,
+        "inference_latency_p50_ms": 0.5467960000089533,
+        "task": "pick_place",
+        "duration_seconds": 52.67569708824158,
+        "joint_samples": 528,
+        "max_joint_range_deg": 144.57835467588873,
+        "grip_range": 0.21515433466629474,
+        "image_count": 792
+      },
+      "checks": [
+        "scripts/job.sh dry-run passed before one asynchronous submission with explicit CLI profile",
+        "All 817 downloaded artifacts passed check.py, including PNG decoding, full video decode/timing, CSV values, physical contacts/lift/carry/release/placement and applied-command consistency",
+        "Every recorded ROS message deserialized inside the published image and topic counts matched result.json",
+        "Recorded ONNX actions replayed; camera localization, measured scene kinematics and model checksum passed inside the published image",
+        "Visually inspected grasp, carry and final tray placement frames",
+        "Actual Unity renderer NVIDIA L40S / OpenGLCore",
+        "COMPLETED provider state and GPU instance confirmed NotFound after automatic deletion",
+        "Local task, runner and job-helper regressions passed; README shell blocks, local links and anchors checked",
+        "Eleven packaged player/runtime/model/checker file hashes matched the tested checkout and fresh build",
+        "Artifact cleanup command exercised with --dryrun; artifacts retained"
+      ],
+      "artifacts": {
+        "prefix": "s3://flux-action-serverless-20260925/unity-articulations/pick-style-20261026T180439Z/",
+        "downloaded_files": 817,
+        "downloaded_bytes": 78070733,
+        "preview_sha256": "04e39902fd3b2cc56f948ea8466806deec8898f282373a6240a6604ce9483e83",
+        "rosbag_sha256": "0f429a77558e5763ef9f87c08252b5cd0282ce25d45a450297adc940a175fac6"
+      },
+      "video": {
+        "fps": 15,
+        "duration_seconds": 52.733333,
+        "frames": 791,
+        "captured_images": 792
+      },
+      "unity_build": {
+        "editor_version": "6000.6.5f1",
+        "source_revision": "111705a8a4417fb7fe1816f46daa67ef01342464",
+        "ros": 2
+      },
+      "build_notes": [
+        "Fresh pinned Unity project prepared and Linux player built with licensed Editor 6000.6.5f1 and Linux Mono module",
+        "Published the exact Dockerfile with fresh player/runtime; reused cached APT, Python and ROS dependency layers, so this does not validate fresh dependency installation"
+      ]
     }
   ],
   "graphics_probes": [
@@ -393,7 +476,8 @@
     "GPU-unavailable startup: exits 1 with preserved Xorg logs before ROS/Unity start",
     "Customer DemoBuild.ExportKinematics exactly matches shipped grasp-centre chain",
     "Docker /app/run.py SHA256 matches checkout",
-    "test_demo.py: artifact/video gates, startup/permission failures, timeout and process-group cleanup passed on final source"
+    "test_demo.py: artifact/video gates, startup/permission failures, timeout and process-group cleanup passed on final source",
+    "test_job.py: explicit CLI profile, dry-run/submission failures, invalid run IDs and fail-fast fresh-directory README download checks"
   ],
   "prior_smooth_video_attempt": {
     "job_id": "aijob-e00smx21qwrzkm771n",
@@ -402,9 +486,9 @@
     "reason": "15 FPS capture succeeded with 901 frames, but FFmpeg 4.4 rejected concat option directives. Encoder fixed, preview recovered locally; provider failure remains a failure.",
     "vm_removed": true
   },
-  "date": "2026-10-16",
-  "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1016pin2",
-  "image_digest": "sha256:01f748fd6ede7f06bf88a5a04516bd6cee86666773213ed7db136e348e9abac3",
+  "date": "2026-10-26",
+  "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1026style",
+  "image_digest": "sha256:58648bbd75434879912eeb5cd164da74b08f243ddf8e3f25795c79ddbee7068e",
   "limits": [
     "One calibrated red cube and tray; no randomized-scene benchmark or physical hardware validation",
     "Color segmentation and geometric IK guide a learned joint servo; gripper task sequence is scripted",
@@ -710,5 +794,17 @@
     "verified_job_id": "aijob-e00ypv9z5fr79zzr86",
     "verified_image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009org"
   },
-  "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19"
+  "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
+  "style_alignment": {
+    "reference_pr": 33,
+    "verified_job_id": "aijob-e00cjnv40g2jjhw662",
+    "tested_source_commit": "1e9f594195176aea6db2fcce748ab29faa5ea1e3",
+    "changes": [
+      "Branded README, workflow figure and measured reference run",
+      "Explicit resource configuration and four build/submit/download/check steps",
+      "scripts/job.sh with explicit CLI profile and artifact/monitoring commands",
+      "Fail-fast fresh-directory download using existing checker",
+      "Cleanup instructions, adaptation prompt and advanced ROS/ONNX checks"
+    ]
+  }
 }

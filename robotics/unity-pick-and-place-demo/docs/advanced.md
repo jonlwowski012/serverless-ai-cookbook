@@ -151,3 +151,15 @@ replay passed inside the published image, and the GPU instance was removed.
 The build reused cached dependency layers after a separate image upload hit a
 registry finalization error. Freshly reinstalled APT/Python package versions from
 that unpublished image were not cloud-validated. See `validation.json` for details.
+
+On 2026-10-26, the PR #33 style alignment was tested in job
+`aijob-e00cjnv40g2jjhw662` using image `ur3:1026style`. The pinned Unity project
+was prepared from scratch and its Linux player rebuilt with Editor 6000.6.5f1;
+Docker reused cached APT, Python and ROS dependency layers. The job completed
+in 1m 57s with 53.9 cm of cube motion and 23.0 mm placement error. All 817
+downloaded artifacts (78.1 MB) passed the checker; the video has 791 frames at
+15 FPS over 52.7 seconds. Every recorded ROS message deserialized and ONNX
+actions replayed inside the published image. Grasp, carry and placement frames
+were visually checked, and automatic GPU-instance removal was confirmed.
+Exact measurements, hashes, source commit and build limitations are in
+`validation.json`. The bundled preview remains the earlier verified run.

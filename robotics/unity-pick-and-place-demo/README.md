@@ -25,16 +25,16 @@ Build the Linux player once with a licensed Unity Editor on your machine. The pl
 
 ## Reference run
 
-| Measured on 2026-10-16 | Result |
+| Measured on 2026-10-26 | Result |
 | --- | --- |
 | Compute | One NVIDIA L40S; ONNX inference on CPU |
 | Container runtime | 1m 57s |
-| Cube displacement | 54.0 cm |
-| Placement error | 10.2 mm |
-| Video | 53.5 seconds, 640×480, 15 FPS |
-| Verification | 829 downloaded artifacts checked; ROS messages deserialized and ONNX actions replayed |
+| Cube displacement | 53.9 cm |
+| Placement error | 23.0 mm |
+| Video | 52.7 seconds, 640×480, 15 FPS |
+| Verification | 817 downloaded artifacts checked; ROS messages deserialized and ONNX actions replayed |
 
-These are observations from one calibrated scene, not a performance guarantee. Container runtime includes startup, simulation, encoding, and publication; it excludes local preparation/build, image push, scheduling, and image pull. Cost and peak memory/scratch usage were not measured. The recorded run reused a previously built Unity player and cached dependency layers; [validation history](docs/advanced.md#validation-history) records those limits.
+These are observations from one calibrated scene, not a performance guarantee. Container runtime includes startup, simulation, encoding, and publication; it excludes local preparation/build, image push, scheduling, and image pull. Cost and peak memory/scratch usage were not measured. The run used a freshly prepared pinned Unity project and rebuilt Linux player, with cached Docker dependency layers; [validation history](docs/advanced.md#validation-history) records those limits.
 
 ## Workflow
 
@@ -56,7 +56,7 @@ These are observations from one calibrated scene, not a performance guarantee. C
 | Local build | Licensed Unity Editor and Linux Mono module | Build a graphics-enabled player once; no Editor credentials in the image. |
 | Serverless run | `gpu-l40s-a`, `1gpu-8vcpu-32gb`, 50 GiB scratch | One pick-and-place task; default simulation limit 180 seconds, job timeout 15 minutes. |
 
-The timeout is a ceiling, not an estimated duration. Download size and peak scratch usage have not been benchmarked. Keep the complete Linux player, including its libraries and `build.json`.
+The timeout is a ceiling, not an estimated duration. The reference run downloaded 78.1 MB of artifacts; peak scratch usage was not measured. Keep the complete Linux player, including its libraries and `build.json`.
 
 ## Files
 
@@ -172,8 +172,8 @@ The checker exits nonzero for missing images, invalid trajectories, incomplete r
   "success": true,
   "task": "pick_place",
   "renderer": {"vendor": "NVIDIA Corporation", "api": "OpenGLCore"},
-  "cube_displacement_m": 0.5399,
-  "placement_error_m": 0.0102
+  "cube_displacement_m": 0.5389,
+  "placement_error_m": 0.0230
 }
 ```
 
