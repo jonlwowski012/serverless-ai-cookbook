@@ -28,16 +28,16 @@ The demo downloads pinned data and model revisions, converts LeIsaac's joint val
 
 ## Reference smoke run
 
-| Measured on 2026-10-23 | Result |
+| Measured on 2026-10-26 | Result |
 | --- | --- |
 | GPU | One H200 |
 | Training | 100 microsteps / 25 optimizer updates |
-| Container runtime | 8m 02s |
+| Container runtime | 8m 07s |
 | Peak GPU memory | 29.83 GB |
 | Final reported training loss | 0.276 |
 | Output | Raw and EMA adapters, about 472 MB each; both SHA-256 hashes verified |
 
-Container runtime includes preparation, model downloads, training, and publication; it excludes local image build/push, scheduling, and image pull. These are observations from one smoke using a cached pinned runtime with current source, not a time-to-first-run guarantee. Cost and peak scratch usage were not measured; GPU runtime, storage, and transfers can contribute to the bill. The calibrated 60,000-microstep run remains unverified.
+Container runtime includes preparation, model downloads, training, and publication; it excludes local image build/push, scheduling, and image pull. These are observations from one smoke using an image built from this Dockerfile, not a time-to-first-run guarantee. Cost and peak scratch usage were not measured; GPU runtime, storage, and transfers can contribute to the bill. The calibrated 60,000-microstep run remains unverified.
 
 ## Workflow
 
@@ -52,6 +52,7 @@ Left: front camera, mapped to the policy's scene camera. Right: wrist camera. Th
 ## Requirements and compute
 
 - Local tools: authenticated Nebius CLI, Docker with Linux AMD64 build support, and AWS CLI configured for Object Storage. Python 3.11+ runs the local checks and artifact verification.
+- Result verification needs about 1 GB of free local disk space, in addition to Docker build storage.
 - A Nebius project, subnet, Object Storage bucket, container registry, and quota for the resources below. Keep the resources in the same region.
 - Hugging Face model access: accept the linked model's access terms where required, and supply the token through `NEBIUS_HF_TOKEN_SECRET`.
 
@@ -143,7 +144,7 @@ Expect `COMPLETED`, `microsteps: 100`, and an adapter hash in `TRAIN_COMPLETE.js
 
 ## Verify your result
 
-First require the cloud job to report `COMPLETED`; the artifact checker does not query job state. Download into a fresh directory named after this run. Use the same steps for smoke and full runs:
+First require the cloud job to report `COMPLETED`; the artifact checker does not query job state. Download into a fresh directory named after this run. The adapters total about 944 MB; optimizer state is excluded. Use the same steps for smoke and full runs:
 
 ```bash
 nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"
@@ -153,7 +154,7 @@ aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/TRAIN_COMPLETE.json" "$RESULTS_DIR
   --endpoint-url "$NEBIUS_S3_ENDPOINT"
 CHECKPOINT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["selected_checkpoint"].rsplit("/",1)[0])' "$RESULTS_DIR/TRAIN_COMPLETE.json")
 aws s3 cp "s3://$NEBIUS_BUCKET/runs/$RUN_NAME/$CHECKPOINT/" "$RESULTS_DIR/$CHECKPOINT/" \
-  --recursive --endpoint-url "$NEBIUS_S3_ENDPOINT"
+  --recursive --exclude "training_state/*" --endpoint-url "$NEBIUS_S3_ENDPOINT"
 python3 scripts/verify.py "$RESULTS_DIR"
 ```
 
@@ -247,7 +248,7 @@ Use the existing NEBIUS_* and AWS_PROFILE environment settings. If required
 resource IDs or the HF secret selector are missing, ask for them. Never search
 other files for credentials, print token values, or put credentials in images.
 Run local tests. Build and push the documented Linux AMD64 image, then run
-scripts/job.sh smoke dry-run. Resolve validation errors before submitting one
+bash scripts/job.sh smoke dry-run. Resolve validation errors before submitting one
 smoke job. Record its ID and RUN_NAME; monitor that job to a terminal state
 without submitting duplicates. Require COMPLETED, follow Verify your result,
 and report steps, runtime, artifact locations, and independently checked hashes.

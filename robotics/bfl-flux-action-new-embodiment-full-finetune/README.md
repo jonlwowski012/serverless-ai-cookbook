@@ -28,16 +28,16 @@ The demo downloads pinned model and dataset revisions, trains four updates as a 
 
 ## Reference smoke run
 
-| Measured on 2026-10-23 | Result |
+| Measured on 2026-10-26 | Result |
 | --- | --- |
 | GPU | One H200 |
 | Training | Four optimizer updates |
-| Container runtime | 11m 21s |
+| Container runtime | 11m 33s |
 | Peak GPU memory | 68.6 GB |
-| Final training loss | 1.5763 |
+| Final training loss | 1.5762 |
 | Output | Complete checkpoint plus 13.9 GB BF16 export; export SHA-256 verified |
 
-Container runtime includes preparation, model downloads, training, and publication; it excludes local image build/push, scheduling, and image pull. These are observations from one smoke using a cached pinned runtime with current source, not a time-to-first-run guarantee. Cost and peak scratch usage were not measured; GPU runtime, storage, and transfers can contribute to the bill. An earlier run completed 3,000 updates; the current export has not been independently loaded into a policy.
+Container runtime includes preparation, model downloads, training, and publication; it excludes local image build/push, scheduling, and image pull. These are observations from one smoke using an image built from this Dockerfile, not a time-to-first-run guarantee. Cost and peak scratch usage were not measured; GPU runtime, storage, and transfers can contribute to the bill. An earlier run completed 3,000 updates; the current export has not been independently loaded into a policy.
 
 ## Workflow
 
@@ -54,6 +54,7 @@ These are the first decoded frames of the three training camera streams, in reci
 ## Requirements and compute
 
 - Local tools: authenticated Nebius CLI, Docker with Linux AMD64 build support, and AWS CLI configured for Object Storage. Python 3.11+ runs the local checks and artifact verification. No local GPU is required.
+- Result verification needs about 14 GB of free local disk space, in addition to Docker build storage.
 - A Nebius project, subnet, Object Storage bucket, container registry, and quota for the resources below. Keep the resources in the same region.
 - Hugging Face model access: accept the linked model's access terms where required, and supply the token through `NEBIUS_HF_TOKEN_SECRET`.
 
@@ -252,7 +253,7 @@ Use the existing NEBIUS_* and AWS_PROFILE environment settings. If required
 resource IDs or the HF secret selector are missing, ask for them. Never search
 other files for credentials, print token values, or put credentials in images.
 Run local tests. Build and push the documented Linux AMD64 image, then run
-scripts/job.sh smoke dry-run. Resolve validation errors before submitting one
+bash scripts/job.sh smoke dry-run. Resolve validation errors before submitting one
 smoke job. Record its ID and RUN_NAME; monitor that job to a terminal state
 without submitting duplicates. Require COMPLETED, follow Verify your result,
 and report steps, runtime, artifact locations, and independently checked hashes.
