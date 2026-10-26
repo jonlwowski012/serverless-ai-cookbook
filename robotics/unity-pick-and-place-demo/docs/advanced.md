@@ -64,15 +64,21 @@ python3 tests/test_task.py
 python3 tests/test_demo.py
 ```
 
-For a downloaded run, replay ONNX outputs and compare measured Unity kinematics:
-`.venv/bin/python tests/test_policy.py "results/$RUN_ID"`. To check ROS contracts and
-deserialize the bag inside the image:
+## Additional artifact checks
+
+The main tutorial uses only Python and FFmpeg for result validation. Run the extra policy and ROS checks with the exact published image's dependencies:
 
 ```bash
-docker run --rm --platform linux/amd64 -i --entrypoint bash \
-  -e BAG_PATH="/results/$RUN_ID/rosbag" -v "$PWD/results:/results" "$NEBIUS_IMAGE" \
-  -c 'source /opt/ros/humble/setup.bash; python3 -' < tests/test_ros.py
+docker run --rm --platform linux/amd64 --entrypoint bash \
+  -e RUN_ID="$RUN_ID" -e BAG_PATH="/results/$RUN_ID/rosbag" \
+  -v "$PWD:/cookbook:ro" -v "$PWD/results:/results:ro" "$NEBIUS_IMAGE" \
+  -c 'set -e; source /opt/ros/humble/setup.bash
+      export PYTHONPATH="/app:${PYTHONPATH:-}"
+      python3 /cookbook/tests/test_policy.py "/results/$RUN_ID"
+      python3 /cookbook/tests/test_ros.py'
 ```
+
+The policy check replays recorded ONNX actions and compares measured Unity kinematics. The ROS check verifies observation contracts and deserializes every bag message. Both mounts are read-only. The image uses CPU ONNX inference; its allocated GPU is used for Unity camera rendering.
 
 ## Troubleshooting
 

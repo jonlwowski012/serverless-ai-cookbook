@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
-case ${1:-submit} in submit|dry-run) ;; *) echo 'usage: bash job.sh [submit|dry-run]' >&2; exit 2 ;; esac
+case ${1:-submit} in submit|dry-run) ;; *) echo 'usage: bash scripts/job.sh [submit|dry-run]' >&2; exit 2 ;; esac
+: "${NEBIUS_PROFILE:?set NEBIUS_PROFILE}"
 : "${NEBIUS_IMAGE:?set NEBIUS_IMAGE}"
 : "${NEBIUS_BUCKET_ID:?set NEBIUS_BUCKET_ID}"
 : "${RUN_ID:?set a fresh RUN_ID}"
 [[ $RUN_ID =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || { echo 'invalid RUN_ID' >&2; exit 2; }
-command=(nebius ai job create --name "unity-$RUN_ID" --image "$NEBIUS_IMAGE"
+command=(nebius ai job create --profile "$NEBIUS_PROFILE" --name "unity-$RUN_ID" --image "$NEBIUS_IMAGE"
   --platform gpu-l40s-a --preset 1gpu-8vcpu-32gb --disk-size 50Gi
   --timeout 15m --restart-policy never
   --volume "$NEBIUS_BUCKET_ID:/results:rw"
@@ -17,4 +18,17 @@ if [[ ${1:-submit} == dry-run ]]; then
   "${command[@]}" --dry-run
 else
   "${command[@]}" --async
+  cat <<EOF
+
+Submitted: unity-$RUN_ID
+Run: $RUN_ID
+Artifacts: unity-articulations/$RUN_ID/ (bucket ID: $NEBIUS_BUCKET_ID)
+Completion receipt: unity-articulations/$RUN_ID/result.json
+
+Find the job ID:
+  nebius ai job get-by-name --name "unity-$RUN_ID" --profile "$NEBIUS_PROFILE" ${NEBIUS_PROJECT_ID:+--parent-id "$NEBIUS_PROJECT_ID"}
+Monitor (replace JOB_ID with the returned ID):
+  nebius ai job get JOB_ID --profile "$NEBIUS_PROFILE"
+  nebius ai job logs JOB_ID --profile "$NEBIUS_PROFILE" --tail 80
+EOF
 fi
