@@ -6,7 +6,7 @@
 
 On October 16, 2026, the digest-pinned Dockerfile was rebuilt and tested end to end: push the image, submit the single job and four-job recording sweep, download the results, and replay the recordings in Rerun 0.38.1. The tested image digest was `sha256:7efbc82dd4ba25f4bfdee85a4bdfe774afca271b01e3e1b56faece914de27568`.
 
-On `gpu-l40s-a`, single job `aijob-e00fa9by4w00zv4kd4` completed with `success: true`, 1.17 cm XY error, and both S3 objects. Recording sweep `20261016T155745Z-e0594113` submitted four independent jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Each case had all three S3 objects and 98 measured frames covering about 10.1 seconds. Every final recorded cube pose matched `result.json`.
+On `gpu-l40s-a`, the single job completed with `success: true`, 1.17 cm XY error, and both S3 objects. The recording sweep submitted four independent jobs in about 20 seconds; all four completed with `success: true` and 1.17–1.27 cm XY error. Each case had all three S3 objects and 98 measured frames covering about 10.1 seconds. Every final recorded cube pose matched `result.json`.
 
 Jobs took about 13 minutes each, including provisioning and image pulling. The cookbook console and Rerun screenshots were captured during the earlier October 6 validation runs.
 
