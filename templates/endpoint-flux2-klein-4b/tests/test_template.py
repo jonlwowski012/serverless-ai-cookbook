@@ -34,13 +34,17 @@ class TemplateTests(unittest.TestCase):
 
     def test_readme_curl_generation_and_editing(self):
         received = []
+        readiness_responses = [200]
+        readiness_calls = []
 
         class API(BaseHTTPRequestHandler):
             def log_message(self, *args):
                 pass
 
             def do_GET(self):
-                self.send_response(200)
+                status = readiness_responses.pop(0) if readiness_responses else 500
+                readiness_calls.append(status)
+                self.send_response(status)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'data': [{'id': 'black-forest-labs/FLUX.2-klein-4B'}]}).encode())
@@ -66,6 +70,18 @@ class TemplateTests(unittest.TestCase):
                 readiness = next(b for b in blocks if 'ready=false' in b)
                 subprocess.run(['bash', '-euo', 'pipefail', '-c', setup + readiness],
                                cwd=directory, check=True, capture_output=True)
+                for statuses in ([401], [403], [502, 200]):
+                    with self.subTest(readiness_statuses=statuses):
+                        readiness_responses[:] = statuses
+                        readiness_calls.clear()
+                        result = subprocess.run(
+                            ['bash', '-euo', 'pipefail', '-c', setup + 'sleep() { :; }\n' + readiness],
+                            cwd=directory, text=True, capture_output=True, timeout=5)
+                        self.assertEqual(readiness_calls, statuses)
+                        self.assertEqual(result.returncode, 0 if statuses[-1] == 200 else 1)
+                        if statuses[-1] != 200:
+                            self.assertIn('Authentication failed', result.stderr)
+                            self.assertNotIn('timed out', result.stderr)
                 for snippet in snippets:
                     subprocess.run(['bash', '-euo', 'pipefail', '-c', setup + snippet], cwd=directory, check=True)
                 self.assertEqual((Path(directory) / 'klein-generated.png').read_bytes(), PNG)

@@ -38,16 +38,17 @@ AUTH=(-H "Authorization: Bearer $TOKEN")
 
 ### Wait for the model
 
-Nebius can show RUNNING while weights are downloading or the pipeline is initializing. The loop below makes at most 80 attempts, with a ten-second timeout per attempt. Stop and inspect logs if it times out; do not create a duplicate endpoint.
+Nebius can show RUNNING while weights are downloading or the pipeline is initializing. The loop below makes at most 80 attempts, with a ten-second timeout per attempt. Authentication errors stop immediately; check your endpoint token. Stop and inspect logs if it times out; do not create a duplicate endpoint.
 
 ```bash
 ready=false
 for attempt in {1..80}; do
-  if curl --fail --silent --show-error --max-time 10 "${AUTH[@]}" \
-    "$BASE_URL/v1/models" -o models.json; then
-    ready=true
-    break
-  fi
+  status=$(curl --silent --show-error --max-time 10 "${AUTH[@]}" \
+    "$BASE_URL/v1/models" -o models.json --write-out '%{http_code}') || status=000
+  case "$status" in
+    200) ready=true; break ;;
+    401|403) echo 'Authentication failed; check the endpoint TOKEN.' >&2; exit 1 ;;
+  esac
   sleep 15
 done
 [ "$ready" = true ] || { echo 'Model readiness timed out; inspect endpoint logs.' >&2; exit 1; }
