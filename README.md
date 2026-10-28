@@ -113,6 +113,7 @@ Robotics and physical-AI experiment loops.
 - [`isaac-pick-place-sweep`](./robotics/isaac-pick-place-sweep/README.md) — run a Franka pick-and-place parameter sweep as parallel Isaac Sim jobs with S3 results
 - [`lerobot-finetune-job`](./robotics/lerobot-finetune-job/README.md) — fine-tune a LeRobot ACT or Diffusion policy on a robotics dataset in a serverless GPU job
 - [`smolva-ft-norma-core`](./robotics/smolva-ft-norma-core/README.md) — fine-tune SmolVLA for SO-101 with bundled trajectories
+- [`unity-pick-and-place-demo`](./robotics/unity-pick-and-place-demo/README.md) — run Unity UR3 pick-and-place with ROS 2 and a shipped learned servo in one Nebius GPU job; verify video, recordings, and task evidence from Object Storage
 
 ---
 

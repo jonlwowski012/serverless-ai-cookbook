@@ -1,0 +1,16 @@
+{
+  "unity": {
+    "page": "https://unity.com/legal/branding-trademarks",
+    "asset": "https://cdn.sanity.io/images/fuvbjjlp/production/ed8ae4aba799bd64a04b6dee9e9f4eaee5735bc6-415x100.png",
+    "variant": "Official Made with Unity logo"
+  },
+  "nebius": {
+    "page": "https://nebius.com/media-kit",
+    "archive": "https://assets.nebius.com/assets/2dd2ad13-45c1-4429-a47c-156bedd4d71d/NEBIUS-logos%2807.25%29%20%281%29.zip?cache-buster=2025-08-27T11%3A29%3A04.907Z",
+    "files": [
+      "SVGs/NEBIUS-outline-black.svg",
+      "SVGs/NEBIUS-outline-white.svg"
+    ]
+  },
+  "modifications": "Logo files are unchanged. The Made with Unity SVG embeds the official PNG on a white background with clear space for visibility in both themes."
+}
