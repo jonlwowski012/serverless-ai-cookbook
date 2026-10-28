@@ -56,13 +56,17 @@ export KINEMATICS_PATH="$PWD/runtime/pick-kinematics.json"
 "$UNITY_EDITOR" -batchmode -quit -projectPath "$PWD/project/ArmRobot" \
   -executeMethod DemoBuild.ExportKinematics -logFile "$PWD/kinematics.log"
 uv venv --python 3.11 .venv
-uv pip install --python .venv/bin/python numpy==2.4.6 onnx==1.23.2 \
-  onnxruntime==1.31.0 pillow==10.4.0
+uv pip install --python .venv/bin/python numpy==1.26.4 onnx==1.23.2 \
+  onnxruntime==1.23.2 pillow==10.4.0
 OPENBLAS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 .venv/bin/python tools/train_servo.py
 .venv/bin/python tests/test_policy.py
 python3 tests/test_task.py
 python3 tests/test_demo.py
 ```
+
+The NumPy, ONNX Runtime and Pillow versions above match the runtime image in
+`Dockerfile`; ONNX is needed only to export the retrained model. Rebuild the
+image after retraining before submitting another job.
 
 ## Additional artifact checks
 
@@ -130,21 +134,21 @@ python3 check.py "results/$LOCAL_RUN"
 
 ## Validation history
 
-[validation.json](../validation.json) records image digests, job IDs, measurements, and failed attempts.
+[validation.json](../validation.json) records image digests, measurements, and failed attempts. Tenant-specific job,
+instance and run IDs, private registry paths, and bucket locations are omitted.
 Its `historical_records` section preserves the earlier reaching and scripted validation records under their original filenames. The current checker supports pick-and-place only; the old model and training code have been removed.
 
-The bundled video is the verified 2026-10-09 GPU run: 53.3 cm of cube motion, 5.5 mm placement error, and 791 frames at 15 FPS. The simplified version, including the later publication-failure and CSV fixes, was verified in job `aijob-e00xn56q80jpm8q3by` using image `ur3:1009simple`: 53.9 cm of cube motion, 3.8 mm placement error, and a 53.5-second video at 15 FPS. All 829 artifacts passed the current checker, every ROS message deserialized, and recorded policy actions replayed correctly. The completed GPU instance was removed. The bundled preview remains the earlier verified run.
+The bundled video is the verified 2026-10-09 GPU run: 53.3 cm of cube motion, 5.5 mm placement error, and 791 frames at 15 FPS. The simplified version, including the later publication-failure and CSV fixes, was verified using image `ur3:1009simple`: 53.9 cm of cube motion, 3.8 mm placement error, and a 53.5-second video at 15 FPS. All 829 artifacts passed the current checker, every ROS message deserialized, and recorded policy actions replayed correctly. The completed GPU instance was removed. The bundled preview remains the earlier verified run.
 
 The reorganized cookbook was subsequently rebuilt, pushed and tested on Nebius
-in job `aijob-e00ypv9z5fr79zzr86`, using image `ur3:1009org`. It completed with
+using image `ur3:1009org`. It completed with
 53.9 cm of cube motion and 7.1 mm placement error. The downloaded 53.3-second video
 has 800 frames at 15 FPS; all 826 artifacts passed verification, all ROS messages
 deserialized, and the recorded learned actions replayed correctly. The GPU
 instance was automatically removed. Exact digests and measurements are recorded
 in `validation.json`; the bundled preview remains the earlier verified run.
 
-On 2026-10-16, the digest-pinned PR was tested in job
-`aijob-e00qcj1my269jtchjv` using image `ur3:1016pin2`. It completed with 54.0 cm
+On 2026-10-16, the digest-pinned PR was tested using image `ur3:1016pin2`. It completed with 54.0 cm
 of cube motion and 10.2 mm placement error. All 829 artifacts passed checks; the
 53.5-second video contains 803 frames at 15 FPS. ROS deserialization and policy
 replay passed inside the published image, and the GPU instance was removed.
@@ -152,8 +156,7 @@ The build reused cached dependency layers after a separate image upload hit a
 registry finalization error. Freshly reinstalled APT/Python package versions from
 that unpublished image were not cloud-validated. See `validation.json` for details.
 
-On 2026-10-26, the PR #33 style alignment was tested in job
-`aijob-e00cjnv40g2jjhw662` using image `ur3:1026style`. The pinned Unity project
+On 2026-10-26, the PR #33 style alignment was tested using image `ur3:1026style`. The pinned Unity project
 was prepared from scratch and its Linux player rebuilt with Editor 6000.6.5f1;
 Docker reused cached APT, Python and ROS dependency layers. The job completed
 in 1m 57s with 53.9 cm of cube motion and 23.0 mm placement error. All 817

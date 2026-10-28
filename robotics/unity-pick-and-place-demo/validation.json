@@ -4,17 +4,14 @@
   "prior_verified_ros_policy_record": "historical_records.validation-ros-1fps.json",
   "attempts": [
     {
-      "job_id": "aijob-e00cpn4maamk3f2whc",
-      "run_id": "pick-camera-20261009T185800Z",
       "state": "FAILED",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009pick1",
+      "image": "ur3:1009pick1",
       "digest": "sha256:947c2b81833328d9e3a3579f15d1f0dd4f000162b32d034f31be9506b218c0aa",
-      "reason": "Red cube camera localization was vertically mirrored; removed extra PNG row flip. Logs downloaded, VM removed."
+      "reason": "Red cube camera localization was vertically mirrored; removed extra PNG row flip. Logs downloaded, VM removed.",
+      "date": "2026-10-09"
     },
     {
-      "job_id": "aijob-e00rx42vvdz4r3dejd",
-      "run_id": "pick-camera-20261009T190300Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009pick2",
+      "image": "ur3:1009pick2",
       "digest": "sha256:024d23ea7a18f9ef5f2fd48280f4a5e3117331610ee0a20d4f2b5751bf35c84e",
       "state": "COMPLETED",
       "started_at": "2026-10-09T19:06:19.546026657Z",
@@ -57,15 +54,12 @@
       ],
       "vm_removed": true,
       "artifacts": {
-        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-camera-20261009T190300Z/",
         "files": 2571,
         "preview_sha256": "90a66c57863cb651724ab7e5242efb5dc1b3d1f31236e2ba1f18695d3281f748"
       }
     },
     {
-      "job_id": "aijob-e00p0mps18n7q7z0wd",
-      "run_id": "pick-gpu-20261009T191500Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009pickgpu",
+      "image": "ur3:1009pickgpu",
       "digest": "sha256:205cd81680b4c11fa1d7e1f2a4c2f689dd7e0a6a030d56c864446353bda24151",
       "state": "COMPLETED",
       "started_at": "2026-10-09T19:18:57.683406619Z",
@@ -117,7 +111,6 @@
         "No active validation VM remains"
       ],
       "artifacts": {
-        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-gpu-20261009T191500Z/",
         "downloaded_files": 816,
         "preview_sha256": "9a5ee539939e61c65de741987563b28414a94d06c8e15eaed6689d2323ca33f3",
         "rosbag_sha256": "0bd277814a8228b38df12aa9c98cbad50c23ac6490f98290d25f0203ac1537f4"
@@ -133,15 +126,12 @@
       }
     },
     {
-      "job_id": "aijob-e00xn56q80jpm8q3by",
-      "run_id": "pick-simple-20261009T202200Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009simple",
+      "image": "ur3:1009simple",
       "digest": "sha256:46e898096b1a7bdfac0cbf2a846ce19a2b7496bd471d5c0baac706a53767ff28",
       "state": "COMPLETED",
       "started_at": "2026-10-09T20:22:41.183822425Z",
       "finished_at": "2026-10-09T20:24:38.804228072Z",
       "vm_removed": true,
-      "compute_instance_id": "computeinstance-e00wyt2180zs8bxctj",
       "result": {
         "success": true,
         "requested_seconds": 180.0,
@@ -188,7 +178,6 @@
         "Tutorial dry-run validation passed; local Markdown links and anchors resolve"
       ],
       "artifacts": {
-        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-simple-20261009T202200Z/",
         "downloaded_files": 829,
         "preview_sha256": "9613b9682e857d745fa7f706da7662d10728c8089b325f9adc5dccd326b48e7d",
         "rosbag_sha256": "8fb5a42960944e422db9d35c3d82904a0efb26cb8befe834ac2750e14e46cb4b"
@@ -203,15 +192,12 @@
       }
     },
     {
-      "job_id": "aijob-e00ypv9z5fr79zzr86",
-      "run_id": "pick-organized-20261009T205642Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009org",
+      "image": "ur3:1009org",
       "digest": "sha256:03f3878e078c1c13083356b31f9b96f2692a01c2a779edd132c61b8ebcbeaabf",
       "state": "COMPLETED",
       "started_at": "2026-10-09T21:00:15.407162705Z",
       "finished_at": "2026-10-09T21:02:12.941014544Z",
       "vm_removed": true,
-      "compute_instance_id": "computeinstance-e00hkhfrmmp09a2785",
       "result": {
         "success": true,
         "requested_seconds": 180.0,
@@ -259,7 +245,6 @@
         "GPU instance confirmed NotFound after automatic deletion"
       ],
       "artifacts": {
-        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-organized-20261009T205642Z/",
         "downloaded_files": 826,
         "preview_sha256": "600bb97b147185047e8e3b734c1c7387ea3aa2fee0b00084e58b5106f4416e4d",
         "rosbag_sha256": "6bdd1db02a027dfd3d4dd655a5c17795a040aeeaf3a7e2eff7b9dd8dc6c49266"
@@ -279,9 +264,7 @@
       }
     },
     {
-      "job_id": "aijob-e00qcj1my269jtchjv",
-      "run_id": "pick-pinned-20261016T164545Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1016pin2",
+      "image": "ur3:1016pin2",
       "digest": "sha256:01f748fd6ede7f06bf88a5a04516bd6cee86666773213ed7db136e348e9abac3",
       "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
       "tested_source_commit": "10a2f91924ca634eeb02b6300a43a9025681c0e6",
@@ -289,7 +272,6 @@
       "started_at": "2026-10-16T16:48:57.742485483Z",
       "finished_at": "2026-10-16T16:50:55.048753552Z",
       "vm_removed": true,
-      "compute_instance_id": "computeinstance-e00mn27pdpg4jpmj98",
       "result": {
         "success": true,
         "requested_seconds": 180.0,
@@ -336,7 +318,6 @@
         "GPU instance confirmed NotFound after automatic deletion"
       ],
       "artifacts": {
-        "prefix": "s3://simfarm-artifacts/unity-articulations/pick-pinned-20261016T164545Z/",
         "downloaded_files": 829,
         "preview_sha256": "4bac1897c3cb491674cca7718ebe7efc7da98ea43f02253c3664fde143840abf",
         "rosbag_sha256": "e1574be33379420171d741c6a3b5c9784d6398b4138aa0dd1763f4a03a11fa4b"
@@ -362,9 +343,7 @@
       ]
     },
     {
-      "job_id": "aijob-e00cjnv40g2jjhw662",
-      "run_id": "pick-style-20261026T180439Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1026style",
+      "image": "ur3:1026style",
       "digest": "sha256:58648bbd75434879912eeb5cd164da74b08f243ddf8e3f25795c79ddbee7068e",
       "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
       "tested_source_commit": "1e9f594195176aea6db2fcce748ab29faa5ea1e3",
@@ -373,7 +352,6 @@
       "finished_at": "2026-10-26T18:14:27.523789863Z",
       "container_runtime_seconds": 117.320656409,
       "vm_removed": true,
-      "compute_instance_id": "computeinstance-e00z4kepc3kfqrgnkh",
       "result": {
         "success": true,
         "requested_seconds": 180.0,
@@ -422,7 +400,6 @@
         "Artifact cleanup command exercised with --dryrun; artifacts retained"
       ],
       "artifacts": {
-        "prefix": "s3://flux-action-serverless-20260925/unity-articulations/pick-style-20261026T180439Z/",
         "downloaded_files": 817,
         "downloaded_bytes": 78070733,
         "preview_sha256": "04e39902fd3b2cc56f948ea8466806deec8898f282373a6240a6604ce9483e83",
@@ -447,7 +424,6 @@
   ],
   "graphics_probes": [
     {
-      "job_id": "aijob-e00mkp75brbm74eqwx",
       "state": "COMPLETED",
       "gpu": "NVIDIA L40S",
       "driver": "580.173.02",
@@ -456,13 +432,11 @@
       "vm_removed": true
     },
     {
-      "job_id": "aijob-e00kn0mg7k63j5ckxn",
       "result": "Xorg rejected UseDisplayDevice=None on this virtual-display driver; removed the setting",
       "state": "COMPLETED",
       "vm_removed": true
     },
     {
-      "job_id": "aijob-e00fh4bmw8rhsdphbt",
       "state": "COMPLETED",
       "result": "Native OpenGL renderer NVIDIA L40S/PCIe/SSE2 via Xorg, driver 580.173.02",
       "artifacts": "results/xorg2-probe-20261009/gpu-probe.json",
@@ -480,14 +454,13 @@
     "test_job.py: explicit CLI profile, dry-run/submission failures, invalid run IDs and fail-fast fresh-directory README download checks"
   ],
   "prior_smooth_video_attempt": {
-    "job_id": "aijob-e00smx21qwrzkm771n",
-    "run_id": "ros-smooth-20261009T183037Z",
     "state": "FAILED",
     "reason": "15 FPS capture succeeded with 901 frames, but FFmpeg 4.4 rejected concat option directives. Encoder fixed, preview recovered locally; provider failure remains a failure.",
-    "vm_removed": true
+    "vm_removed": true,
+    "date": "2026-10-09"
   },
   "date": "2026-10-26",
-  "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1026style",
+  "image": "ur3:1026style",
   "image_digest": "sha256:58648bbd75434879912eeb5cd164da74b08f243ddf8e3f25795c79ddbee7068e",
   "limits": [
     "One calibrated red cube and tray; no randomized-scene benchmark or physical hardware validation",
@@ -509,8 +482,7 @@
       "test_policy.py: recorded ONNX actions and scene kinematics still pass"
     ],
     "fresh_cloud_run": true,
-    "published_image_contains_fixes": true,
-    "verified_job_id": "aijob-e00xn56q80jpm8q3by"
+    "published_image_contains_fixes": true
   },
   "simplification": {
     "main_readme_lines": 131,
@@ -519,8 +491,7 @@
       "docs/build-unity.md",
       "docs/advanced.md"
     ],
-    "verified_job_id": "aijob-e00xn56q80jpm8q3by",
-    "bundled_media_run_id": "pick-gpu-20261009T191500Z"
+    "bundled_media_date": "2026-10-09"
   },
   "historical_records": {
     "validation-ros-1fps.json": {
@@ -529,32 +500,26 @@
       "baseline_record": "validation-scripted.json",
       "attempts": [
         {
-          "job_id": "aijob-e00xk1fd79fpz5rmem",
           "provider_state": "COMPLETED",
-          "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009130000",
-          "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-20261009T180500Z/",
+          "image": "ur3:1009130000",
           "goals_reached": 2,
           "issue": "First observation before scene physics settled inflated initial distance and displacement. Later FK error median 0.70 micrometres. Corrected before final validation.",
           "compute_removed": true
         },
         {
-          "job_id": "aijob-e00dwztg2mx7axnbtp",
           "mode": "learned",
           "provider_state": "COMPLETED",
-          "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-learned-20261009T180908Z/",
           "issue": "Measured-position drive targets accumulated gravity drift; corrected to persistent targets. Observation schedule changed to avoid timer drift.",
           "compute_removed": true
         },
         {
-          "job_id": "aijob-e00vmyxxd80840qd71",
           "mode": "zero",
           "provider_state": "COMPLETED",
-          "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-zero-20261009T180914Z/",
           "issue": "Measured-position drive targets accumulated gravity drift; corrected to persistent targets. Observation schedule changed to avoid timer drift.",
           "compute_removed": true
         }
       ],
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009131800",
+      "image": "ur3:1009131800",
       "image_digest": "sha256:89f0256392b62f3546a9573b56b529d450ef874df854bfd47fc86e8a7ba0657c",
       "validated_at_utc": "2026-10-09T18:24:56.147502+00:00",
       "source_revision": "111705a8a4417fb7fe1816f46daa67ef01342464",
@@ -571,13 +536,10 @@
       "runs": [
         {
           "mode": "learned",
-          "run_id": "ros-hold-learned-20261009T181740Z",
-          "job_id": "aijob-e00xqfa2y69mrrv81b",
           "provider_state": "COMPLETED",
           "started_at": "2026-10-09T18:20:42.809697040Z",
           "finished_at": "2026-10-09T18:22:15.254022561Z",
           "compute_removed": true,
-          "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-hold-learned-20261009T181740Z/",
           "downloaded_file_count": 76,
           "artifact_check": {
             "success": true,
@@ -630,13 +592,10 @@
         },
         {
           "mode": "zero",
-          "run_id": "ros-hold-zero-20261009T181746Z",
-          "job_id": "aijob-e00nwttgggtkwysh8d",
           "provider_state": "COMPLETED",
           "started_at": "2026-10-09T18:20:53.972491426Z",
           "finished_at": "2026-10-09T18:22:26.017001274Z",
           "compute_removed": true,
-          "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-hold-zero-20261009T181746Z/",
           "downloaded_file_count": 76,
           "artifact_check": {
             "success": true,
@@ -702,15 +661,13 @@
         "DemoBuild.ValidateContract executed during builds"
       ],
       "failure_test": {
-        "job_id": "aijob-e00tgkc3fvqprwns0e",
         "provider_state": "FAILED",
         "expected_failure": true,
         "fault": "Validation-only policy image stopped commands after 15 observations",
         "unity_error": "ROS commands stale for two seconds",
         "policy_error": "Unity observations stopped",
         "exit_status": 1,
-        "compute_removed": true,
-        "artifact_uri": "s3://simfarm-artifacts/unity-articulations/ros-stale-20261009T180950Z/"
+        "compute_removed": true
       },
       "limitations": [
         "Three nearby Cartesian position targets, gripper mount tool point, no orientation or grasping policy",
@@ -722,19 +679,17 @@
       "validated_at_utc": "2026-10-09T17:35:20.766285+00:00",
       "source_revision": "111705a8a4417fb7fe1816f46daa67ef01342464",
       "unity_editor": "6000.6.5f1",
-      "job_id": "aijob-e00s0ej2dp66evqptn",
       "provider_state": "COMPLETED",
       "started_at": "2026-10-09T17:32:01.695622538Z",
       "finished_at": "2026-10-09T17:33:19.089270999Z",
-      "image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009172835",
-      "image_digest": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3@sha256:28f6378d081417a950ab9f6eb12357d01d5125c49faaf5d79768c4f945684775",
+      "image": "ur3:1009172835",
+      "image_digest": "sha256:28f6378d081417a950ab9f6eb12357d01d5125c49faaf5d79768c4f945684775",
       "compute": {
         "platform": "gpu-l40s-a",
         "preset": "1gpu-8vcpu-32gb",
         "renderer": "Mesa llvmpipe software OpenGL",
         "compute_removed": true
       },
-      "artifact_uri": "s3://simfarm-artifacts/unity-articulations/e2e-20261009T171548Z-r2/",
       "downloaded_file_count": 66,
       "artifact_check": {
         "success": true,
@@ -755,7 +710,6 @@
         "preview.mp4": "c553deb1163feff051638a407671b9d298bd44b0a14a04df1c50f8afbf57e627"
       },
       "previous_attempt": {
-        "job_id": "aijob-e00k52h571089fnvhs",
         "provider_state": "FAILED",
         "reason": "shutil.copytree copied unsupported POSIX metadata to the Object Storage mount",
         "artifact_check_passed_after_download": true,
@@ -790,14 +744,12 @@
       "Documentation command paths, links and anchors checked"
     ],
     "fresh_cloud_run": true,
-    "runtime_matches_verified_image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009simple",
-    "verified_job_id": "aijob-e00ypv9z5fr79zzr86",
-    "verified_image": "cr.eu-north1.nebius.cloud/e00p1dktnvpy0a4qt1/ur3:1009org"
+    "runtime_matches_verified_image": "ur3:1009simple",
+    "verified_image": "ur3:1009org"
   },
   "base_image": "ros:humble-ros-base-jammy@sha256:860e53793ccf575e5369b5e9a19939de2bfcfb46a299954d06f54f2af54fed19",
   "style_alignment": {
     "reference_pr": 33,
-    "verified_job_id": "aijob-e00cjnv40g2jjhw662",
     "tested_source_commit": "1e9f594195176aea6db2fcce748ab29faa5ea1e3",
     "changes": [
       "Branded README, workflow figure and measured reference run",
@@ -806,5 +758,6 @@
       "Fail-fast fresh-directory download using existing checker",
       "Cleanup instructions, adaptation prompt and advanced ROS/ONNX checks"
     ]
-  }
+  },
+  "redaction_note": "Tenant-specific job, instance and run IDs and bucket locations are omitted. Private image references retain only tags and digests."
 }
