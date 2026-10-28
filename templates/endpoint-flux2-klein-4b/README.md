@@ -1,3 +1,13 @@
+---
+title: FLUX.2 Klein 4B image generation and editing
+category: inference
+type: endpoint
+runtime: gpu-l40s-a
+frameworks: [vllm-omni, pytorch]
+keywords: [flux, klein, image-generation, image-editing, serverless-endpoint]
+difficulty: intermediate
+---
+
 # FLUX.2 Klein 4B
 
 <!-- factory:deploy -->
@@ -25,6 +35,13 @@ Black Forest Labs' **FLUX.2 Klein distilled 4B** generates images from text and 
 The default uses four sampling steps and guidance 1.0, matching the distilled model's [sampling example](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B#using-with-diffusers-). It is not the base model or a LoRA deployment; see the [adapter-specific example](../../inference/flux2-klein-lora/README.md) for that workflow.
 
 The deploy link selects **one L40S, 16 vCPUs, 64 GiB RAM, a 500 GiB disk, token authentication, and on-demand compute**. Before creating it, set shared memory to **16 GiB** in the console's advanced settings. Select a project and subnet with L40S capacity. The public weights are ungated; an HF token is optional for authenticated Hub downloads. Keep any token in the console's secret configuration, never in committed commands.
+
+## Requirements
+
+- A Nebius project, subnet and L40S quota in the same region, with outbound access to Docker Hub and Hugging Face.
+- Bash, curl **7.76+** (for `--fail-with-body`), and Python **3.10+** for the local request examples and tests. Run shell blocks in Bash; they use arrays and `pipefail`.
+- The optional Python client uses `requests`; the curl examples and local tests use only Python's standard library.
+- An authenticated Nebius CLI profile for CLI deployment and cleanup. A local GPU, Docker build and Hugging Face token are not required for this public model.
 
 ## Test request
 
@@ -93,29 +110,56 @@ Compare the two files. A valid PNG establishes an API response; inspect the imag
 
 ### Python
 
-Install `requests` in your local Python environment, then run the equivalent requests after readiness:
+Prepare a local environment, then run the equivalent requests after readiness:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install requests
+```
 
 ```python
 import base64
 import os
 from pathlib import Path
+
 import requests
 
 base = os.environ["BASE_URL"].rstrip("/")
 headers = {"Authorization": f"Bearer {os.environ['TOKEN']}"}
-params = {"model": "black-forest-labs/FLUX.2-klein-4B", "size": "1024x1024",
-          "n": 1, "response_format": "b64_json", "num_inference_steps": 4,
-          "guidance_scale": 1.0, "seed": 42}
-response = requests.post(f"{base}/v1/images/generations", headers=headers,
-    json={**params, "prompt": "A red ceramic teapot on a wooden table, studio photograph."}, timeout=55)
+params = {
+    "model": "black-forest-labs/FLUX.2-klein-4B",
+    "size": "1024x1024",
+    "n": 1,
+    "response_format": "b64_json",
+    "num_inference_steps": 4,
+    "guidance_scale": 1.0,
+    "seed": 42,
+}
+response = requests.post(
+    f"{base}/v1/images/generations",
+    headers=headers,
+    json={
+        **params,
+        "prompt": "A red ceramic teapot on a wooden table, studio photograph.",
+    },
+    timeout=55,
+)
 response.raise_for_status()
-Path("python-generated.png").write_bytes(base64.b64decode(response.json()["data"][0]["b64_json"], validate=True))
+generated = base64.b64decode(response.json()["data"][0]["b64_json"], validate=True)
+Path("python-generated.png").write_bytes(generated)
+
 with open("python-generated.png", "rb") as image:
-    response = requests.post(f"{base}/v1/images/edits", headers=headers,
+    response = requests.post(
+        f"{base}/v1/images/edits",
+        headers=headers,
         data={**params, "prompt": "Change only the red teapot to blue."},
-        files={"image": ("reference.png", image, "image/png")}, timeout=55)
+        files={"image": ("reference.png", image, "image/png")},
+        timeout=55,
+    )
 response.raise_for_status()
-Path("python-edited.png").write_bytes(base64.b64decode(response.json()["data"][0]["b64_json"], validate=True))
+edited = base64.b64decode(response.json()["data"][0]["b64_json"], validate=True)
+Path("python-edited.png").write_bytes(edited)
 ```
 
 ## Observed results
@@ -164,6 +208,14 @@ python3 -m unittest discover -s templates/endpoint-flux2-klein-4b/tests -v
 ```
 
 Run that command from the repository root. The tests exercise README requests against a stub API; they do not prove model execution.
+
+## Adapt the examples
+
+- Change `prompt` to describe the image or edit you want. For editing, replace the multipart image path with your own PNG/JPEG; describe both the change and what should stay the same.
+- Change `seed` to explore variations. A fixed seed helps compare requests within the same runtime; it does not guarantee identical outputs across hardware or software versions.
+- Change `size` as `WIDTHxHEIGHT`. The validated size is `1024x1024`; test other dimensions for compatibility, memory use and gateway latency before relying on them.
+- Keep `num_inference_steps=4`, `guidance_scale=1.0` and `n=1` as the starting point for this distilled model. Larger batches, other sampling settings and concurrent requests were not validated here.
+- If you change compute or the serving command, update both the console link and CLI command and rerun the contract tests and a cloud smoke test. Use the [LoRA example](../../inference/flux2-klein-lora/README.md) for adapter-specific deployment; switching to a base or 9B model changes the workload and may change the license.
 
 ## Cost and cleanup
 

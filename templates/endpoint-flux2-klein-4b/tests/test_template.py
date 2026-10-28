@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import tempfile
 import threading
@@ -13,24 +14,56 @@ from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parents[1]
+IMAGE = "vllm/vllm-omni:v0.24.0@sha256:566d89d7eaba08dd313dab2464e67fe984825d281c77437582e3008a917bbf7c"
+SERVE_ARGS = (
+    "serve black-forest-labs/FLUX.2-klein-4B --omni --host 0.0.0.0 --port 8000 "
+    "--revision e7b7dc27f91deacad38e78976d1f2b499d76a294"
+)
+EXPECTED_DEPLOY = {
+    "image": [IMAGE],
+    "command": ["vllm " + SERVE_ARGS],
+    "targetPort": ["8000"],
+    "platform": ["gpu-l40s-a"],
+    "preset": ["1gpu-16vcpu-64gb"],
+    "diskSize": ["500GiB"],
+    "preemptible": ["false"],
+    "auth": ["true"],
+}
 PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aMxkAAAAASUVORK5CYII=')
 
 
 class TemplateTests(unittest.TestCase):
-    def test_catalog_links_match_template(self):
+    def test_deployment_contract(self):
         def links(path):
             raw = re.findall(r'https://console\.nebius\.com/serverless/endpoint/create\?[^"\s)]+', path.read_text())
             return [parse_qs(urlsplit(html.unescape(u)).query) for u in raw if 'FLUX.2-klein-4B' in u]
-        reference = links(ROOT / 'README.md')
-        self.assertEqual(len(reference), 1)
-        query = reference[0]
-        self.assertIn('@sha256:', query['image'][0])
-        self.assertEqual(query['auth'], ['true'])
-        self.assertEqual(query['preemptible'], ['false'])
-        self.assertEqual(query['platform'], ['gpu-l40s-a'])
-        self.assertIn('--port 8000', query['command'][0])
-        self.assertEqual(links(REPO / 'README.md'), reference)
-        self.assertEqual(links(REPO / 'templates/README.md'), reference * 2)
+        self.assertEqual(links(ROOT / 'README.md'), [EXPECTED_DEPLOY])
+        self.assertEqual(links(REPO / 'README.md'), [EXPECTED_DEPLOY])
+        self.assertEqual(links(REPO / 'templates/README.md'), [EXPECTED_DEPLOY] * 2)
+
+        blocks = re.findall(r'```bash\n(.*?)```', (ROOT / 'README.md').read_text(), re.S)
+        command = next(b for b in blocks if 'nebius ai endpoint create' in b)
+        args = shlex.split(command.replace('\\\n', ''))
+        self.assertEqual(args[:4], ['nebius', 'ai', 'endpoint', 'create'])
+        expected_cli = {
+            '--name': 'flux2-klein-4b',
+            '--image': IMAGE,
+            '--platform': EXPECTED_DEPLOY['platform'][0],
+            '--preset': EXPECTED_DEPLOY['preset'][0],
+            '--container-port': EXPECTED_DEPLOY['targetPort'][0],
+            '--disk-size': '500Gi',
+            '--shm-size': '16Gi',
+            '--auth': 'token',
+            '--container-command': 'vllm',
+            '--args': SERVE_ARGS,
+        }
+        for flag, expected in expected_cli.items():
+            with self.subTest(cli_flag=flag):
+                self.assertEqual(args.count(flag), 1)
+                self.assertEqual(args[args.index(flag) + 1], expected)
+        self.assertEqual({arg for arg in args if arg.startswith('--')}, set(expected_cli) | {'--public'})
+        self.assertIn('--public', args)
+        self.assertNotIn('--preemptible', args)
 
     def test_readme_curl_generation_and_editing(self):
         received = []
