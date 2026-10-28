@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -12,6 +14,63 @@ from run import evaluate, main as run_case, upload
 
 
 class RecipeTest(unittest.TestCase):
+    def test_readme_download_checks(self):
+        recipe = Path(__file__).resolve().parent
+        blocks = re.findall(r"```bash\n(.*?)```", (recipe / "README.md").read_text(), re.S)
+        block = next(block for block in blocks if "export RESULTS_DIR=" in block)
+        target = [-0.4, 0.2, 0.02575]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source" / "case-000"
+            source.mkdir(parents=True)
+            (source / "COMPLETE").touch()
+            result = {"run_id": "test-run", "case_id": "case-000", "controller_done": True,
+                      "success": True, "final_cube_position_m": target,
+                      "target_position_m": target, "xy_error_m": 0, "z_error_m": 0}
+            frame = {"cube_position_m": target, "cube_orientation_wxyz": [1, 0, 0, 0],
+                     "link_positions_m": [[0, 0, 0]]}
+            recording = {"frames": [{**frame, "time_s": 0}, {**frame, "time_s": 1}]}
+            binary = root / "bin"
+            binary.mkdir()
+            aws = binary / "aws"
+            aws.write_text(f"#!{sys.executable}\nimport os, shutil, sys\n"
+                           "if os.environ.get('FAIL_DOWNLOAD'): sys.exit(7)\n"
+                           "shutil.copytree(os.environ['SOURCE'], os.environ['RESULTS_DIR'], dirs_exist_ok=True)\n")
+            aws.chmod(0o755)
+            env = {**os.environ, "PATH": f"{binary}:{os.environ['PATH']}",
+                   "PYTHONPATH": str(recipe), "RUN_ID": "test-run", "CASE_COUNT": "1",
+                   "SOURCE": str(source.parent), "S3_BUCKET": "test", "S3_ENDPOINT_URL": "https://example.invalid"}
+
+            def check(expected_success, **changes):
+                (source / "result.json").write_text(json.dumps({**result, **changes}))
+                (source / "trajectory.json").write_text(json.dumps(recording))
+                work = Path(tempfile.mkdtemp(dir=root))
+                completed = subprocess.run(["bash", "-c", block], cwd=work, env=env,
+                                           text=True, capture_output=True)
+                self.assertEqual(completed.returncode == 0, expected_success, completed.stderr)
+                return work
+
+            work = check(True)
+            stale = subprocess.run(["bash", "-c", block], cwd=work, env=env, capture_output=True)
+            self.assertNotEqual(stale.returncode, 0)
+            check(False, success=False)
+            check(False, run_id="wrong-run")
+            check(False, xy_error_m=1)
+            recording["frames"][-1]["time_s"] = 0
+            check(False)
+            recording["frames"][-1]["time_s"] = 1
+            recording["frames"][-1]["cube_orientation_wxyz"] = [2, 0, 0, 0]
+            check(False)
+            recording["frames"][-1]["cube_orientation_wxyz"] = [1, 0, 0, 0]
+            (source / "COMPLETE").unlink()
+            check(False)
+            (source / "COMPLETE").touch()
+            env["CASE_COUNT"] = "2"
+            check(False)
+            env["CASE_COUNT"] = "1"
+            env["FAIL_DOWNLOAD"] = "1"
+            check(False)
+
     def test_four_independent_jobs(self):
         points = expand_sweep(json.loads(Path(__file__).with_name("sweep.json").read_text()))
         self.assertEqual(points, [
