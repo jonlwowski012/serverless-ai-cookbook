@@ -39,6 +39,12 @@ class TemplateTests(unittest.TestCase):
             def log_message(self, *args):
                 pass
 
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'data': [{'id': 'black-forest-labs/FLUX.2-klein-4B'}]}).encode())
+
             def do_POST(self):
                 body = self.rfile.read(int(self.headers['Content-Length']))
                 received.append((self.path, self.headers.get('Authorization'), body))
@@ -57,6 +63,9 @@ class TemplateTests(unittest.TestCase):
         setup = f'BASE_URL=http://127.0.0.1:{server.server_port}\nAUTH=(-H "Authorization: Bearer test-token")\n'
         try:
             with tempfile.TemporaryDirectory() as directory:
+                readiness = next(b for b in blocks if 'ready=false' in b)
+                subprocess.run(['bash', '-euo', 'pipefail', '-c', setup + readiness],
+                               cwd=directory, check=True, capture_output=True)
                 for snippet in snippets:
                     subprocess.run(['bash', '-euo', 'pipefail', '-c', setup + snippet], cwd=directory, check=True)
                 self.assertEqual((Path(directory) / 'klein-generated.png').read_bytes(), PNG)
